@@ -62,7 +62,7 @@ env = Environment(
             action="python scripts/random_split.py --input ${SOURCES[0]} --outputs ${TARGETS} --proportions ${TRAIN_PROPORTION} ${DEV_PROPORTION} ${TEST_PROPORTION} --random_seed ${RANDOM_SEED}"
         ),
         "GenerateNegativeExamples" : Builder(
-            action="python scripts/generate_negative_examples.py --hathitrust_index ${HATHITRUST_INDEX} --marc_index ${MARC_INDEX} --per_language ${PER_LANGUAGE} --output ${TARGETS[0]} --random_seed ${RANDOM_SEED}"
+            action="python scripts/generate_negative_examples.py --hathitrust_index ${HATHITRUST_INDEX} --marc_index ${MARC_INDEX} --per_language ${PER_LANGUAGE} --output ${TARGETS[0]} --random_seed ${RANDOM_SEED} --hathitrust_root ${HATHITRUST_ROOT}"
         ),
         "ApplyFasttext" : Builder(
             action="python scripts/apply_fasttext.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
@@ -95,11 +95,6 @@ armeno_turkish_with_content = env.ExpandEntries(
 combined = env.MergeEntries(
     "work/combined.jsonl.gz",
     [armeno_turkish_with_content, negative_examples]
-)
-
-combined_with_fasttext = env.ApplyFasttext(
-    "work/combined_with_fasttext.jsonl.gz",
-    combined
 )
 
 # if the data lake file is specified in config.py, no need to build it

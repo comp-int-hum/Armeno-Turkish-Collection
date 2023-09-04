@@ -128,6 +128,7 @@ if __name__ == "__main__":
                 prev_script = s
             else:
                 cur += c
+
         if len(cur) > 0:
             scripts[prev_script] = scripts.get(prev_script, [])
             scripts[prev_script].append(cur)                    
@@ -179,7 +180,7 @@ if __name__ == "__main__":
                 langs[lang].append((htid, author, title, author_date, pub_place, pub_date, line))
 
     langs = {k : v for k, v in langs.items() if re.match(r"[a-z]{3}", k) and len(v) >= args.min_total_per_language}
-    
+
     with gzip.open(args.output, "wt") as ofd:
         for lang, docs in langs.items():
             dates = [d[5] for d in docs]
