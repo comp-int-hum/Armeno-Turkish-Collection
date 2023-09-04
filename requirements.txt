@@ -1,2 +1,8 @@
-steamroller
-pairtree
+fasttext==0.9.2
+huggingface-hub==0.16.4
+Pairtree==0.8.1
+pymarc==5.1.0
+SCons==4.5.2
+SteamRoller==2.0.1
+torch==2.0.1
+Wikidata==0.7.0

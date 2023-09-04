@@ -67,6 +67,8 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--hathitrust_root", dest="hathitrust_root", help="Path to Hathi Trust")
+    parser.add_argument("--hathitrust_index", dest="hathitrust_index", help="Path to HathiTrust index")
+    parser.add_argument("--marc_index", dest="marc_index", help="Path to MARC index")
     parser.add_argument("--unicode_scripts", dest="unicode_scripts", default="data/Scripts.txt", help="Unicode Script.txt file")
     parser.add_argument("--per_language", dest="per_language", default=10, type=int, help="Number of documents per language")
     parser.add_argument("--min_total_per_language", dest="min_total_per_language", default=100, type=int, help="Number of total documents available per language")
@@ -78,8 +80,9 @@ if __name__ == "__main__":
         random.seed(args.random_seed)
 
     psf = PairtreeStorageFactory()        
-    def process_doc(htid, language, title, author, author_date, pub_place, pub_date, ofd):
+    def process_doc(htid, language, title, author, author_date, pub_place, pub_date, marc_meta, ofd):
         subcollection, ident = re.match(r"^([^\.]+)\.(.*)$", htid).groups()
+        marc_meta = json.loads(marc_meta)
         try:
             store = psf.get_store(
                 store_dir=os.path.join(
@@ -112,7 +115,6 @@ if __name__ == "__main__":
         prev_script = None
         cur = ""
         scripts = {}
-        #script_counts = {}
         for c in txt:
             s = script_lookup.get(ord(c), "Common")
             if s != "Common":
@@ -133,14 +135,16 @@ if __name__ == "__main__":
         if len(scripts) > 0:
             ofd.write(json.dumps(
                 {
-                    "language" : language,
-                    "title" : title,
-                    "author" : author,
-                    "scripts" : scripts,
                     "htid" : htid,
-                    "author_date" : author_date,
-                    "pub_date" : pub_date,
-                    "pub_place" : pub_place
+                    "marc_meta" : marc_meta,
+                    "label" : language,
+                    #"title" : title,
+                    #"author" : author,
+                    "content" : scripts,
+                    #"htid" : htid,
+                    #"author_date" : author_date,
+                    #"pub_date" : pub_date,
+                    #"pub_place" : pub_place
                 }
             ) + "\n")
             return True
@@ -162,7 +166,7 @@ if __name__ == "__main__":
 
     # create a dictionary from language code to lists of documents with that code 
     langs = {}
-    with gzip.open(os.path.join(args.hathitrust_root, "full_marc.json.gz"), "rt") as ifd:
+    with gzip.open(args.marc_index, "rt") as ifd:
         for line in ifd:
             j = json.loads(line)
             htid, author, title, author_date, lang, pub_place, pub_date = get_info(j)
@@ -172,10 +176,9 @@ if __name__ == "__main__":
                 continue
             if htid and pub_date > 1500:                
                 langs[lang] = langs.get(lang, [])
-                langs[lang].append((htid, author, title, author_date, pub_place, pub_date))
+                langs[lang].append((htid, author, title, author_date, pub_place, pub_date, line))
 
     langs = {k : v for k, v in langs.items() if re.match(r"[a-z]{3}", k) and len(v) >= args.min_total_per_language}
-
     
     with gzip.open(args.output, "wt") as ofd:
         for lang, docs in langs.items():
@@ -185,8 +188,8 @@ if __name__ == "__main__":
             for bucket in get_buckets(dates):
                 random.shuffle(bucket)
                 for i in range(len(bucket)):
-                    htid, author, title, author_date, pub_place, pub_date = docs[bucket[i]]
-                    suc = process_doc(htid, lang, title, author, author_date, pub_place, pub_date, ofd)
+                    htid, author, title, author_date, pub_place, pub_date, marc_meta = docs[bucket[i]]
+                    suc = process_doc(htid, lang, title, author, author_date, pub_place, pub_date, marc_meta, ofd)
                     if suc:
                         count += 1
                         rest += bucket[i + 1:]
@@ -195,8 +198,7 @@ if __name__ == "__main__":
             for i in rest:
                 if count >= args.per_language:
                     break
-                htid, author, title, author_date, pub_place, pub_date = docs[i]
-                suc = process_doc(htid, lang, title, author, author_date, pub_place, pub_date, ofd)
-                print(suc, count, i)
+                htid, author, title, author_date, pub_place, pub_date, marc_meta = docs[i]
+                suc = process_doc(htid, lang, title, author, author_date, pub_place, pub_date, marc_meta, ofd)
                 if suc:
                     count += 1
