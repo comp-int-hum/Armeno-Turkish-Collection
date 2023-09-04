@@ -103,7 +103,7 @@ combined_with_fasttext = env.ApplyFasttext(
 )
 
 # if the data lake file is specified in config.py, no need to build it
-if env["DATA_LAKE_FILE"]:
+if env.get("DATA_LAKE_FILE", None):
     data_lake_with_content = env.File(env["DATA_LAKE_FILE"])
 else:
     data_lake = env.FilterMarc(
