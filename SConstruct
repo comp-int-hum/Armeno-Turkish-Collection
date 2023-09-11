@@ -38,6 +38,7 @@ vars.AddVariables(
     ("UNICODE_SCRIPTS", "", "data/Scripts.txt"),
     ("PER_LANGUAGE", "", 10),
     ("DATA_LAKE_FILE", "", None),
+    ("MAX_DOC_LENGTH","", 200)
 )
 
 env = Environment(
@@ -63,6 +64,9 @@ env = Environment(
         ),
         "GenerateNegativeExamples" : Builder(
             action="python scripts/generate_negative_examples.py --hathitrust_index ${HATHITRUST_INDEX} --marc_index ${MARC_INDEX} --per_language ${PER_LANGUAGE} --output ${TARGETS[0]} --random_seed ${RANDOM_SEED} --hathitrust_root ${HATHITRUST_ROOT}"
+        ),
+	"CleanChunkExamples" : Builder(
+            action="python scripts/clean_chunk_examples.py --input ${SOURCES[0]} --max_doc_length ${MAX_DOC_LENGTH} --output ${TARGETS[0]}"
         ),
         "ApplyFasttext" : Builder(
             action="python scripts/apply_fasttext.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
@@ -95,6 +99,11 @@ armeno_turkish_with_content = env.ExpandEntries(
 combined = env.MergeEntries(
     "work/combined.jsonl.gz",
     [armeno_turkish_with_content, negative_examples]
+)
+combined_cleaned_chunked = env.CleanChunkExamples(
+    ["work/chunked_combined.json.gz"],
+    ["work/combined.jsonl.gz"],
+    []
 )
 
 # if the data lake file is specified in config.py, no need to build it
