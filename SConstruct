@@ -38,7 +38,7 @@ vars.AddVariables(
     ("UNICODE_SCRIPTS", "", "data/Scripts.txt"),
     ("PER_LANGUAGE", "", 10),
     ("DATA_LAKE_FILE", "", None),
-    ("MAX_DOC_LENGTH","", 200)
+    ("MAX_DOC_LENGTH","", 400)
 )
 
 env = Environment(
@@ -120,10 +120,10 @@ else:
         [data_lake]
     )
 
-#model, scores = env.TrainModel(
-#    ["work/model.pk1.gz", "work/scores.json"],
-#    [labeled_with_content]
-#)
+model, scores = env.TrainModel(
+    ["work/model.pk1.gz", "work/scores.json"],
+    ["work/chunked_combined.json.gz"]
+)
 
 #model_scores_pairs = []
 #for fold in range(1, env["FOLDS"] + 1):

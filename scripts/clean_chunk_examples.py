@@ -41,17 +41,19 @@ ofd = {}
 with gzip.open(args.input, "rt") as ifd,gzip.open(args.output,"wt") as ofd:
     for line in ifd:
         data = json.loads(line)
+        lang_script = ""
+        txt = []
         if data["label"] == "armeno_turkish":
             lang_script = "tur_Armenian"
             txt = (data["content"]).get("Armenian")
         else:
             longest_lang = get_longest_lang(data["content"])
             lang_script = "{}_{}".format(data['label'], longest_lang)
-            txt = " ".join(data["content"][longest_lang])
+            txt = (data["content"][longest_lang])
              
         #txt = [x.strip() for x in txt]
         if txt:
-            tokens = " ".join(txt)
+            tokens = "".join(txt)
             sub_len = args.max_doc_length
             if tokens:
                 num_subdocs = int(len(tokens)/sub_len)
@@ -60,11 +62,10 @@ with gzip.open(args.input, "rt") as ifd,gzip.open(args.output,"wt") as ofd:
                     end = (subnum+1) * sub_len
                     sub_tokens = tokens[start:end]
                     sub_document = "".join(sub_tokens)
-                ofd.write(json.dumps(
-                {
-                    "htid" : data["htid"],
-                    "label" : lang_script,
-                    "content" : sub_document,
-                }
-                ))
-        
+                    j = {
+                        "htid" : data["htid"],
+                        "label" : lang_script,
+                        "content" : sub_document,
+                    }    
+                    ofd.write(json.dumps(j) + "\n")
+                

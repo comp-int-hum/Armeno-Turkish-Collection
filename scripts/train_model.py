@@ -24,30 +24,25 @@ if __name__ == "__main__":
 #Creating content, label and title lists
 X = []
 y = []
-titles = []
+ids = []
 with gzip.open(args.input, "rt") as ifd:
     for line in ifd:
         data = json.loads(line)
         y.append(data['label'])
-        X.append(data['content'])
-        ht_meta = data['ht_meta']
-        titles.append((ht_meta['title']))
-        
+        processed_content = (data['content']).lower().strip()
+        X.append(processed_content)
+        htid = data['htid']
+        ids.append(htid)
 
 le = LabelEncoder()
 y = le.fit_transform(y)
-y = list(zip(y, titles))
+y = list(zip(y, ids))
 
-#Minimal preprocessing by lowercasing the content
-data_list = []
-for text in X:
-    text = text.lower()
-    data_list.append(text)
-    
-cv = CountVectorizer(ngram_range=(1, 4), token_pattern = r"(?u)\b\w+\b", analyzer='char')
-X = cv.fit_transform(data_list).toarray()
+cv = CountVectorizer(ngram_range=(2, 4), token_pattern = r"(?u)\b\w+\b", analyzer='char')
+X = cv.fit_transform(X).toarray()
 
 #train test splitting
+from sklearn.model_selection import train_test_split
 x_train, x_test, y_train_tuples, y_test_tuples = train_test_split(X, y, random_state=1, test_size = 0.20)
 
 #model creation and prediction
@@ -57,28 +52,51 @@ title_test = [title for lable, title in y_test_tuples]
 
 model = MultinomialNB()
 model.fit(x_train, y_train)
-
 # prediction 
 y_pred = model.predict(x_test)
-
 # model evaluation
+from sklearn.metrics import accuracy_score,f1_score
+
 metrics  = {
     "ac":  accuracy_score(y_test, y_pred),
-#   cm: confusion_matrix(y_test, y_pred)   
-    "fscore" : f1_score(y_test, y_pred)
+#   cm: confusion_matrix(y_test, y_pred)                                                                                           
+    "fscore" : f1_score(y_test, y_pred, average='macro')
     }
-#saving the model
-with gzip.open(args.model, "wb") as ofd:
+
+
+with gzip.open("model.pk1.gz", "wb") as ofd:
     ofd.write(pickle.dumps(model))
     
-#saving the scores
-with open(args.scores, "wb") as ofd:
-   ofd.write(pickle.dumps(metrics))
-
-#saving the vectorizer
-with gzip.open(args.vectorizer, "wb") as ofd:
+with gzip.open("vectorizer.pickle.gz", "wb") as ofd:
     ofd.write(pickle.dumps(cv))
+
+#pickle.dump(cv, open("vectorizer.pickle", "wb"))
+
+#saving the scores                                                                                                                 
+with open("scores.json", "wb") as ofd:
+   ofd.write(pickle.dumps(metrics))
+   
+   
+   
+   
+   
+   
+        
+
+
+
+
+
+
+
+
     
+
+
+
+
+
+
 """
 def split_text(text, max_length):
     while len(text) > max_length:
