@@ -3,6 +3,6 @@ huggingface-hub==0.16.4
 Pairtree==0.8.1
 pymarc==5.1.0
 SCons==4.5.2
-SteamRoller==2.0.1
+SteamRoller==2.0.2
 torch==2.0.1
 Wikidata==0.7.0
