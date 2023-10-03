@@ -38,7 +38,7 @@ vars.AddVariables(
     ("UNICODE_SCRIPTS", "", "data/Scripts.txt"),
     ("PER_LANGUAGE", "", 10),
     ("DATA_LAKE_FILE", "", None),
-    ("MAX_DOC_LENGTH","", 400)
+    ("MAX_DOC_LENGTH","", 1000)
 )
 
 env = Environment(
@@ -71,8 +71,8 @@ env = Environment(
         "ApplyFasttext" : Builder(
             action="python scripts/apply_fasttext.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
         ),
-        "TrainModel" : Builder(
-	    action="python scripts/train_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
+        "TrainNBModel" : Builder(
+	    action="python scripts/train_NBmodel.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
 	),
         "GenerateFinalCorpus" : Builder(
             action="python scripts/generate_final_corpus.py --to_annotate ${SOURCES[0]} --score_files ${SOURCES[1:]} --report ${TARGETS[0]} --corpus ${TARGETS[1]}"
@@ -120,7 +120,7 @@ else:
         [data_lake]
     )
 
-model, scores = env.TrainModel(
+model, scores = env.TrainNBModel(
     ["work/model.pk1.gz", "work/scores.json"],
     ["work/chunked_combined.json.gz"]
 )

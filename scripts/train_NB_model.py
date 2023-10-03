@@ -38,8 +38,8 @@ le = LabelEncoder()
 y = le.fit_transform(y)
 y = list(zip(y, ids))
 
-cv = CountVectorizer(ngram_range=(2, 4), token_pattern = r"(?u)\b\w+\b", analyzer='char')
-X = cv.fit_transform(X).toarray()
+cv = CountVectorizer(ngram_range=(2, 2), token_pattern = r"(?u)\b\w+\b", analyzer='char')
+X = cv.fit_transform(X)
 
 #train test splitting
 from sklearn.model_selection import train_test_split
@@ -63,7 +63,7 @@ metrics  = {
     "fscore" : f1_score(y_test, y_pred, average='macro')
     }
 
-
+metrics = json.dumps(metrics)
 with gzip.open("model.pk1.gz", "wb") as ofd:
     ofd.write(pickle.dumps(model))
     
@@ -71,15 +71,16 @@ with gzip.open("vectorizer.pickle.gz", "wb") as ofd:
     ofd.write(pickle.dumps(cv))
 
 #pickle.dump(cv, open("vectorizer.pickle", "wb"))
+#saving the scores
 
-#saving the scores                                                                                                                 
-with open("scores.json", "wb") as ofd:
-   ofd.write(pickle.dumps(metrics))
+with open("scores.json", "wt") as ofd:
+    ofd.write(metrics)
    
    
    
    
    
+
    
         
 
