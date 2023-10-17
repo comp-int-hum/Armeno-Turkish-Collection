@@ -128,9 +128,10 @@ from sklearn.metrics import accuracy_score,f1_score
 
 y_labels = []
 y_preds = []
-for lang, doc in test.items():
-    y_labels.append(lang)
-    y_preds.append(predict_language_from_profiles(doc, lang_profiles, args.ngram, args.ranked))
+for lang, docs in test.items():
+    for doc in docs:
+        y_labels.append(lang)
+        y_preds.append(predict_language_from_profiles(doc, lang_profiles, args.ngram, args.ranked))
     
     #     correct += 1
     # total += 1
