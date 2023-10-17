@@ -126,7 +126,7 @@ def character_ngram_as_tuple(content, ngram_num):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", dest="model", help="Output file for pickled model")
-    parser.add_argument("--scores", dest="scores", help="Output file for scores") 
+    parser.add_argument("--scores", dest="scores", help="Output file for scores")
     parser.add_argument("--input", dest="input", help="Input file")
     parser.add_argument("--ngram", dest="ngram", type = int, help="Ngram number")
     parser.add_argument("--ranked", dest="ranked", type = int, help = "If 0, then perplexity else rank list size")
@@ -142,18 +142,17 @@ with gzip.open(args.input, "rt") as ifd:
     for line in ifd:
         data = json.loads(line)
         label = data['label']
-        lang_dict[label] = lang_dict.get(label, [])
         processed_content = (data['content']).lower().strip()
-        lang_dict[label].append(processed_content)
+        if label in lang_dict:
+            lang_dict[label].append(processed_content)
+        else:
+            lang_dict[label] = []
 
 train, test = train_test_split(lang_dict)
 
 lang_profiles = create_lang_profiles(train, args.ngram)
 
 lang_vocabs = create_lang_vocabs(train, args.ngram)
-
-
-
 
 
 # precision = tp / (tp + fp)

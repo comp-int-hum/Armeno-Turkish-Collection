@@ -75,7 +75,7 @@ with gzip.open("vectorizer.pickle.gz", "wb") as ofd:
 #pickle.dump(cv, open("vectorizer.pickle", "wb"))
 #saving the scores
 
-with open("scores.json", "wt") as ofd:
+with open(args.scores, "wt") as ofd:
     ofd.write(metrics)
    
    
