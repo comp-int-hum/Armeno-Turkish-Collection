@@ -6,6 +6,12 @@ import json
 import nltk
 from nltk import FreqDist
 import random
+from nltk.lm import MLE
+from nltk.util import pad_sequence, everygrams
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.lm.preprocessing import padded_everygram_pipeline
+
+nltk.download('punkt')
 
 warnings.simplefilter("ignore")
 def train_test_split(lang_dict):
@@ -40,6 +46,22 @@ def create_lang_profiles(train_dict, ngram_num):
 
     return lang_profiles
 
+def create_lang_vocabs(train_dict, ngram_num):
+    lang_vocabs = {}
+    for k, v in train_dict.items():
+        lang_model = MLE(ngram_num)
+        tokenized_sents = [word_tokenize(sent) for subdoc in v for sent in sent_tokenize(subdoc)]
+        # padded_text = list(pad_sequence(subdoc, pad_left = True, 
+        #                                  left_pad_symbol = "<s>",
+        #                                  pad_right = True,
+        #                                  right_pad_symbol = "</s>",
+        #                                  n = ngram_num))
+        # padded_ngrams = list(everygrams(padded_text, max_len = ngram_num))
+        train, vocab = padded_everygram_pipeline(ngram_num, tokenized_sents)
+        lang_model.fit(train, vocab)
+        lang_vocabs[k] = lang_model
+    return lang_vocabs
+
 def get_rank_dict(lang_profile, max_size):
     ngrams_sorted = lang_profile.most_common(max_size)
     rank_dict = {}
@@ -67,6 +89,19 @@ def predict_language_from_profiles(text, lang_profiles, ngram_num, max_size):
     scores = {}
     for lang, profile in lang_profiles.items():
         scores[lang] = out_of_place_measure(text, profile, ngram_num, max_size)
+    return min(scores, key=scores.get)
+
+def predict_language_from_vocabs(text, lang_vocabs, ngram_num):
+    # tokenized_text = [word_tokenize(sent) for sent in sent_tokenize(text)]
+    tokenized_text = list(text)
+    text_data = list(pad_sequence(tokenized_text, pad_left = True, 
+                                                    left_pad_symbol = "<s>",
+                                                    pad_right = True,
+                                                    right_pad_symbol = "</s>",
+                                                    n = ngram_num))
+    scores = {}
+    for lang, vocab in lang_vocabs.items():
+        scores[lang] = vocab.perplexity(text_data)
     return min(scores, key=scores.get)
 
 def get_min_subdocs(lang_dict):
@@ -111,7 +146,12 @@ with gzip.open(args.input, "rt") as ifd:
         lang_dict[label].append(processed_content)
 
 train, test = train_test_split(lang_dict)
+<<<<<<< HEAD
 lang_profiles = create_lang_profiles(train, args.ngram)
+=======
+lang_profiles = create_lang_profiles(train)
+lang_vocabs = create_lang_vocabs(train)
+>>>>>>> e2ab4d607ed65b126ca397ba1c0122fc9de909af
 
 
 
@@ -131,7 +171,10 @@ y_preds = []
 for lang, docs in test.items():
     for doc in docs:
         y_labels.append(lang)
-        y_preds.append(predict_language_from_profiles(doc, lang_profiles, args.ngram, args.ranked))
+        if args.ranked == 0:
+            y_preds.append(predict_language_from_vocabs(doc, lang_vocabs, args.ngram))
+        else:
+            y_preds.append(predict_language_from_profiles(doc, lang_profiles, args.ngram, args.ranked))
     
     #     correct += 1
     # total += 1
