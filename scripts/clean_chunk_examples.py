@@ -1,7 +1,7 @@
 import gzip
 import json
 import argparse
-
+# get name script with longest length
 def get_longest_lang(content):
     
     longest_lang = ""
@@ -49,7 +49,7 @@ with gzip.open(args.input, "rt") as ifd,gzip.open(args.output,"wt") as ofd:
         else:
             longest_lang = get_longest_lang(data["content"])
             lang_script = "{}_{}".format(data['label'], longest_lang)
-            txt = (data["content"][longest_lang])
+            txt = (data["content"][longest_lang]) # only keep script of longest length
              
         #txt = [x.strip() for x in txt]
         if txt:
@@ -66,6 +66,7 @@ with gzip.open(args.input, "rt") as ifd,gzip.open(args.output,"wt") as ofd:
                         "htid" : data["htid"],
                         "label" : lang_script,
                         "content" : sub_document,
+                        "subdoc_num": subnum,
                     }    
                     ofd.write(json.dumps(j) + "\n")
                 
