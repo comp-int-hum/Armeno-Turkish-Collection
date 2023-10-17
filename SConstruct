@@ -39,7 +39,7 @@ vars.AddVariables(
     ("PER_LANGUAGE", "", 10),
     ("DATA_LAKE_FILE", "", None),
     ("MAX_DOC_LENGTH","", 1000),
-    ("RANKED", "", 300)
+    ("RANKED", "", 0)
 )
 
 env = Environment(
@@ -124,12 +124,12 @@ else:
     )
 
 model, scores = env.TrainNBModel(
-    ["work/model.pk1.gz", "work/scores.json"],
+    ["work/nb_model.pk1.gz", "work/nb_scores.json"],
     ["work/chunked_combined.json.gz"]
 )
 
 ngram_model, ngram_scores = env.TrainNGModel(
-    ["work/ng_model.pk1.gz", "work/ng_scores.json"],
+    ["work/ng_model.pk1.gz", "work/NG_scores.json"],
     ["work/chunked_combined.json.gz"]
 )
 

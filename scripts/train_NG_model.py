@@ -28,7 +28,8 @@ def train_test_split(lang_dict):
                 train_set[k].append(v[i])
             else:
                 test_set[k].append(v[i])
-    
+    print("Train set ", len(train_set))
+    print("Test set ", len(test_set))
     return train_set, test_set
 
 def update_lang_profile(profile, doc, ngram_num):
@@ -146,12 +147,11 @@ with gzip.open(args.input, "rt") as ifd:
         lang_dict[label].append(processed_content)
 
 train, test = train_test_split(lang_dict)
-<<<<<<< HEAD
+
 lang_profiles = create_lang_profiles(train, args.ngram)
-=======
-lang_profiles = create_lang_profiles(train)
-lang_vocabs = create_lang_vocabs(train)
->>>>>>> e2ab4d607ed65b126ca397ba1c0122fc9de909af
+
+lang_vocabs = create_lang_vocabs(train, args.ngram)
+
 
 
 
