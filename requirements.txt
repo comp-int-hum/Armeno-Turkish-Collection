@@ -8,3 +8,5 @@ torch==2.0.1
 Wikidata==0.7.0
 sklearn
 nltk
+
+

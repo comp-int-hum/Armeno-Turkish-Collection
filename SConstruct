@@ -30,7 +30,7 @@ vars.AddVariables(
     ("TRAIN_PROPORTION", "", 0.8),
     ("DEV_PROPORTION", "", 0.1),
     ("TEST_PROPORTION", "", 0.1),    
-    ("HATHITRUST_ROOT", "", "~/corpora/hathi_trust"),
+    ("HATHITRUST_ROOT", "", "/export/large_corpora/hathi_trust"),
     ("HATHITRUST_INDEX_FILENAME", "", "hathi_full_20211001.txt.gz"),
     ("MARC_INDEX_FILENAME", "", "full_marc.json.gz"),
     ("HATHITRUST_INDEX", "", "${HATHITRUST_ROOT}/${HATHITRUST_INDEX_FILENAME}"),

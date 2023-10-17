@@ -38,6 +38,7 @@ le = LabelEncoder()
 y = le.fit_transform(y)
 y = list(zip(y, ids))
 
+
 # Not understanding why there is a token pattern and also analyzer = 'char'
 cv = CountVectorizer(ngram_range=(2, 2), token_pattern = r"(?u)\b\w+\b", analyzer='char')
 X = cv.fit_transform(X)

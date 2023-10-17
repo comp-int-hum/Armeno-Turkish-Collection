@@ -111,7 +111,7 @@ with gzip.open(args.input, "rt") as ifd:
         lang_dict[label].append(processed_content)
 
 train, test = train_test_split(lang_dict)
-lang_profiles = create_lang_profiles(train)
+lang_profiles = create_lang_profiles(train, args.ngram)
 
 
 
