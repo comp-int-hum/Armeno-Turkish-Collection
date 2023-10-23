@@ -9,24 +9,27 @@ def train_test_split(lang_dict, train_ratio, random_seed, use_min):
     test_set = {}
     min_subdoc_num = get_min_subdocs(lang_dict)
     print("Min subdoc", min_subdoc_num)
-    for k, (htid, docs) in lang_dict.items():
-        subdoc_num = min_subdoc_num if use_min else len(docs)
+    for k, v in lang_dict.items():
+        subdoc_num = min_subdoc_num if use_min else len(v)
+        print(f"Subdoc num: {subdoc_num}")
         train_size = max(int(train_ratio * subdoc_num), 1)
         print(f"Train size: {train_size}")
         train_set[k] = []
         test_set[k] = []
-        random.shuffle(docs)
+        random.shuffle(v)
         for i in range(subdoc_num):
+            htid = v[i][0]
+            subdoc = v[i][1]
             if i < train_size:
-                train_set[k].append((htid, docs[i]))
+                train_set[k].append((htid, subdoc))
             else:
-                test_set[k].append((htid, docs[i]))
+                test_set[k].append((htid, subdoc))
     print("Train set size", len(train_set))
     print("Test set size", len(test_set))
     return train_set, test_set
 
 def get_min_subdocs(lang_dict):
-    return min(len(subdocs) for (_ , subdocs) in lang_dict.values())
+    return min(len(subdocs) for subdocs in lang_dict.values())
 
 if __name__ == "__main__":
 
@@ -61,6 +64,8 @@ if __name__ == "__main__":
                 lang_dict[label] = []
             lang_dict[label].append((htid, processed_content))
 
+    print(args.outputs)
+
 
     # for k, v in lang_dict.items():
     #     if not v:
@@ -69,9 +74,9 @@ if __name__ == "__main__":
     assert(args.ratio <= 1.0)
     assert(args.ratio >= 0.0)
     train, test = train_test_split(lang_dict, args.ratio, args.random_seed, args.min != 0)
-    with open(args.outputs[0], "wt") as train_output:
+    with open(args.outputs[0], "w") as train_output:
         train_output.write(json.dumps(train))
     
-    with open(args.outputs[1], "wt") as test_output:
+    with open(args.outputs[1], "w") as test_output:
         test_output.write(json.dumps(test))
 

@@ -22,9 +22,9 @@ def update_lang_profile(profile, doc, ngram_num):
 def create_lang_profiles(train_dict, ngram_num):
     lang_profiles = {}
 
-    for k, (_, v) in train_dict.items():
+    for k, v in train_dict.items():
         lang_prof = FreqDist()
-        for subdoc in v:
+        for (_, subdoc) in v:
             update_lang_profile(lang_prof, subdoc, ngram_num)
         lang_profiles[k] = lang_prof
 
@@ -32,9 +32,9 @@ def create_lang_profiles(train_dict, ngram_num):
 
 def create_lang_vocabs(train_dict, ngram_num):
     lang_vocabs = {}
-    for k, (_, v) in train_dict.items():
+    for k, v in train_dict.items():
         lang_model = MLE(ngram_num)
-        tokenized_sents = [word_tokenize(sent) for subdoc in v for sent in sent_tokenize(subdoc)]
+        tokenized_sents = [word_tokenize(sent) for (_, subdoc) in v for sent in sent_tokenize(subdoc)]
         # padded_text = list(pad_sequence(subdoc, pad_left = True, 
         #                                  left_pad_symbol = "<s>",
         #                                  pad_right = True,
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", dest="model", help="Output file for pickled model")
     parser.add_argument("--scores", dest="scores", help="Output file for scores")
-    parser.add_argument("--input", dest="input", help="Input file")
+    parser.add_argument("--input", dest="input", nargs = 2, help="Input file")
     parser.add_argument("--ngram", dest="ngram", type = int, help="Ngram number")
     parser.add_argument("--ranked", dest="ranked", type = int, help = "If 0, then perplexity else rank list size")
     args, rest = parser.parse_known_args()
@@ -118,11 +118,11 @@ y = []
 ids = []
 
 lang_dict = {}
-with open(args.input[0], "rt") as train_input:
-    train = json.loads(train_input)
+with open(args.input[0], "r") as train_input:
+    train = json.load(train_input)
     
-with open(args.input[1], "rt") as test_input:
-    test = json.loads(test_input)
+with open(args.input[1], "r") as test_input:
+    test = json.load(test_input)
 
     # for line in train_input:
     #     data = json.loads(line)
@@ -138,10 +138,12 @@ with open(args.input[1], "rt") as test_input:
 #         print("Empty key: ", k)
 
 
+print("NEW RUN")
 if args.ranked == 0:
-	lang_profiles = create_lang_profiles(train, args.ngram)
+    lang_vocabs = create_lang_vocabs(train, args.ngram)
+	
 else:
-	lang_vocabs = create_lang_vocabs(train, args.ngram)
+    lang_profiles = create_lang_profiles(train, args.ngram)
 
 
 # precision = tp / (tp + fp)
@@ -156,8 +158,8 @@ from sklearn.metrics import accuracy_score,f1_score
 
 y_labels = []
 y_preds = []
-for lang, (_, docs) in test.items():
-    for doc in docs:
+for lang, docs in test.items():
+    for (_, doc) in docs:
         y_labels.append(lang)
         if args.ranked == 0:
             y_preds.append(predict_language_from_vocabs(doc, lang_vocabs, args.ngram))
@@ -167,7 +169,7 @@ for lang, (_, docs) in test.items():
     #     correct += 1
     # total += 1
 
-
+model = lang_vocabs if args.ranked == 0 else lang_profiles
 metrics  = {
     "ac":  accuracy_score(y_labels, y_preds),
 #   cm: confusion_matrix(y_test, y_pred)                                                                                           
@@ -176,7 +178,7 @@ metrics  = {
 
 metrics = json.dumps(metrics)
 with gzip.open(args.model, "wb") as ofd:
-    ofd.write(pickle.dumps(lang_profiles))
+    ofd.write(pickle.dumps(model))
     
 # with gzip.open("vectorizer.pickle.gz", "wb") as ofd:
 #     ofd.write(pickle.dumps())
