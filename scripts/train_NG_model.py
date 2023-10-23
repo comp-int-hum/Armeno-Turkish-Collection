@@ -18,7 +18,9 @@ def train_test_split(lang_dict):
     train_set = {}
     test_set = {}
     min_subdoc_num = get_min_subdocs(lang_dict)
-    train_size = int(0.8 * min_subdoc_num)
+    print("Min subdoc", min_subdoc_num)
+    train_size = int(0.8 * min_subdoc_num) + 1
+    print("Train size", train_size)
     for k, v in lang_dict.items():
         train_set[k] = []
         test_set[k] = []
@@ -143,11 +145,16 @@ with gzip.open(args.input, "rt") as ifd:
         data = json.loads(line)
         label = data['label']
         processed_content = (data['content']).lower().strip()
-        if label in lang_dict:
-            lang_dict[label].append(processed_content)
-        else:
+        if label not in lang_dict:
             lang_dict[label] = []
+        lang_dict[label].append(processed_content)
 
+
+for k, v in lang_dict.items():
+    if not v:
+        print("Empty key: ", k)
+
+        
 train, test = train_test_split(lang_dict)
 
 lang_profiles = create_lang_profiles(train, args.ngram)
