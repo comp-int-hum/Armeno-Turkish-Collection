@@ -35,6 +35,7 @@ def create_lang_vocabs(train_dict, ngram_num):
     for k, v in train_dict.items():
         lang_model = MLE(ngram_num)
         char_doclist = [list(subdoc) for (_, subdoc) in v]
+        print(f"Char doc list len: {len(char_doclist)}")
         # padded_text = list(pad_sequence(subdoc, pad_left = True, 
         #                                  left_pad_symbol = "<s>",
         #                                  pad_right = True,

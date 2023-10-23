@@ -132,10 +132,10 @@ train, test = env.TrainTestSplit(
     [combined_cleaned_chunked]
 )
 
-model, scores = env.TrainNBModel(
-    ["work/nb_model.pk1.gz", "work/nb_scores.json"],
-    ["work/chunked_combined.json.gz"]
-)
+# model, scores = env.TrainNBModel(
+#     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
+#     ["work/chunked_combined.json.gz"]
+# )
 
 # model, scores = env.TrainNBModel(
 #     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
@@ -143,7 +143,7 @@ model, scores = env.TrainNBModel(
 # )
 
 ngram_model, ngram_scores = env.TrainNGModel(
-    ["work/ng_model.pk1.gz", "work/NG_scores.json"],
+    ["work/ng_model.pk1.gz", "work/ng_scores.json"],
     [train, test]
 )
 
