@@ -14,25 +14,6 @@ from nltk.lm.preprocessing import padded_everygram_pipeline
 nltk.download('punkt')
 
 warnings.simplefilter("ignore")
-def train_test_split(lang_dict):
-    train_set = {}
-    test_set = {}
-    min_subdoc_num = get_min_subdocs(lang_dict)
-    print("Min subdoc", min_subdoc_num)
-    train_size = int(0.8 * min_subdoc_num) + 1
-    print("Train size", train_size)
-    for k, v in lang_dict.items():
-        train_set[k] = []
-        test_set[k] = []
-        random.shuffle(v)
-        for i in range(min_subdoc_num):
-            if i < train_size:
-                train_set[k].append(v[i])
-            else:
-                test_set[k].append(v[i])
-    print("Train set ", len(train_set))
-    print("Test set ", len(test_set))
-    return train_set, test_set
 
 def update_lang_profile(profile, doc, ngram_num):
     for n in range(1, ngram_num+1):
@@ -41,7 +22,7 @@ def update_lang_profile(profile, doc, ngram_num):
 def create_lang_profiles(train_dict, ngram_num):
     lang_profiles = {}
 
-    for k, v in train_dict.items():
+    for k, (_, v) in train_dict.items():
         lang_prof = FreqDist()
         for subdoc in v:
             update_lang_profile(lang_prof, subdoc, ngram_num)
@@ -51,7 +32,7 @@ def create_lang_profiles(train_dict, ngram_num):
 
 def create_lang_vocabs(train_dict, ngram_num):
     lang_vocabs = {}
-    for k, v in train_dict.items():
+    for k, (_, v) in train_dict.items():
         lang_model = MLE(ngram_num)
         tokenized_sents = [word_tokenize(sent) for subdoc in v for sent in sent_tokenize(subdoc)]
         # padded_text = list(pad_sequence(subdoc, pad_left = True, 
@@ -107,9 +88,6 @@ def predict_language_from_vocabs(text, lang_vocabs, ngram_num):
         scores[lang] = vocab.perplexity(text_data)
     return min(scores, key=scores.get)
 
-def get_min_subdocs(lang_dict):
-    return min(len(subdocs) for subdocs in lang_dict.values())
-
 def extract_features(content, ngram_num):
     tokens = nltk.word_tokenize(content)
     ngrams = list(nltk.ngrams(tokens, ngram_num)) # left and right padding?
@@ -140,26 +118,30 @@ y = []
 ids = []
 
 lang_dict = {}
-with gzip.open(args.input, "rt") as ifd:
-    for line in ifd:
-        data = json.loads(line)
-        label = data['label']
-        processed_content = (data['content']).lower().strip()
-        if label not in lang_dict:
-            lang_dict[label] = []
-        lang_dict[label].append(processed_content)
+with open(args.input[0], "rt") as train_input:
+    train = json.loads(train_input)
+    
+with open(args.input[1], "rt") as test_input:
+    test = json.loads(test_input)
+
+    # for line in train_input:
+    #     data = json.loads(line)
+    #     label = data['label']
+    #     processed_content = (data['content']).lower().strip()
+    #     if label not in lang_dict:
+    #         lang_dict[label] = []
+    #     lang_dict[label].append(processed_content)
 
 
-for k, v in lang_dict.items():
-    if not v:
-        print("Empty key: ", k)
+# for k, v in lang_dict.items():
+#     if not v:
+#         print("Empty key: ", k)
 
-        
-train, test = train_test_split(lang_dict)
 
-lang_profiles = create_lang_profiles(train, args.ngram)
-
-lang_vocabs = create_lang_vocabs(train, args.ngram)
+if args.ranked == 0:
+	lang_profiles = create_lang_profiles(train, args.ngram)
+else:
+	lang_vocabs = create_lang_vocabs(train, args.ngram)
 
 
 # precision = tp / (tp + fp)
@@ -174,7 +156,7 @@ from sklearn.metrics import accuracy_score,f1_score
 
 y_labels = []
 y_preds = []
-for lang, docs in test.items():
+for lang, (_, docs) in test.items():
     for doc in docs:
         y_labels.append(lang)
         if args.ranked == 0:

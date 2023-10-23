@@ -39,7 +39,8 @@ vars.AddVariables(
     ("PER_LANGUAGE", "", 10),
     ("DATA_LAKE_FILE", "", None),
     ("MAX_DOC_LENGTH","", 1000),
-    ("RANKED", "", 0)
+    ("RANKED", "", 0),
+    ("USE_MIN_SUBS", "", 1)
 )
 
 env = Environment(
@@ -67,6 +68,9 @@ env = Environment(
         ),
 		"CleanChunkExamples" : Builder(
             action="python scripts/clean_chunk_examples.py --input ${SOURCES[0]} --max_doc_length ${MAX_DOC_LENGTH} --output ${TARGETS[0]}"
+        ),
+        "TrainTestSplit" : Builder(
+            action="python scripts/train_test_split.py --input ${SOURCES[0]} --outputs ${TARGETS} --use_min ${USE_MIN_SUBDOCS} --train_ratio ${TRAIN_PROPORTION} --random_seed ${RANDOM_SEED}"
         ),
         "ApplyFasttext" : Builder(
             action="python scripts/apply_fasttext.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
@@ -122,16 +126,36 @@ else:
         ["work/data_lake_with_content.jsonl.gz"],
         [data_lake]
     )
+    
+train, test = env.TrainTestSplit(
+    ["work/train_data.json", "work/test_data.json"],
+    [combined_cleaned_chunked]
+)
 
 model, scores = env.TrainNBModel(
     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
     ["work/chunked_combined.json.gz"]
 )
 
+# model, scores = env.TrainNBModel(
+#     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
+#     [train, test]
+# )
+
 ngram_model, ngram_scores = env.TrainNGModel(
     ["work/ng_model.pk1.gz", "work/NG_scores.json"],
-    ["work/chunked_combined.json.gz"]
+    [train, test]
 )
+
+# model, scores = env.TrainNBModel(
+#     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
+#     ["work/chunked_combined.json.gz"]
+# )
+
+# ngram_model, ngram_scores = env.TrainNGModel(
+#     ["work/ng_model.pk1.gz", "work/NG_scores.json"],
+#     ["work/chunked_combined.json.gz"]
+# )
 
 #model_scores_pairs = []
 #for fold in range(1, env["FOLDS"] + 1):
