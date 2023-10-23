@@ -34,14 +34,14 @@ def create_lang_vocabs(train_dict, ngram_num):
     lang_vocabs = {}
     for k, v in train_dict.items():
         lang_model = MLE(ngram_num)
-        tokenized_sents = [word_tokenize(sent) for (_, subdoc) in v for sent in sent_tokenize(subdoc)]
+        char_doclist = [list(subdoc) for (_, subdoc) in v]
         # padded_text = list(pad_sequence(subdoc, pad_left = True, 
         #                                  left_pad_symbol = "<s>",
         #                                  pad_right = True,
         #                                  right_pad_symbol = "</s>",
         #                                  n = ngram_num))
         # padded_ngrams = list(everygrams(padded_text, max_len = ngram_num))
-        train, vocab = padded_everygram_pipeline(ngram_num, tokenized_sents)
+        train, vocab = padded_everygram_pipeline(ngram_num, char_doclist)
         lang_model.fit(train, vocab)
         lang_vocabs[k] = lang_model
     return lang_vocabs
