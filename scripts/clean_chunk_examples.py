@@ -56,17 +56,14 @@ with gzip.open(args.input, "rt") as ifd,gzip.open(args.output,"wt") as ofd:
             tokens = "".join(txt)
             sub_len = args.max_doc_length
             if tokens:
-                num_subdocs = int(len(tokens)/sub_len)
-                for subnum in range(num_subdocs):
-                    start = subnum * sub_len
-                    end = (subnum+1) * sub_len
-                    sub_tokens = tokens[start:end]
+                for start in range(0, len(tokens), sub_len):
+                    end = start + sub_len
+                    sub_tokens = tokens[start:end] # using the fact python will just go to end of str
                     sub_document = "".join(sub_tokens)
                     j = {
-                        "htid" : data["htid"],
-                        "label" : lang_script,
-                        "content" : sub_document,
-                        "subdoc_num": subnum,
-                    }    
+                        "htid": data["htid"],
+                        "label": lang_script,
+                        "content": sub_document,
+                        "subdoc_num": start // sub_len,
+                    }
                     ofd.write(json.dumps(j) + "\n")
-                
