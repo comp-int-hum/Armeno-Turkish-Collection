@@ -6,7 +6,7 @@ import json
 import nltk
 from nltk import FreqDist
 import random
-from nltk.lm import MLE
+from nltk.lm import KneserNeyInterpolated
 from nltk.util import pad_sequence, everygrams
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.lm.preprocessing import padded_everygram_pipeline
@@ -30,13 +30,13 @@ def create_lang_profiles(train_dict, ngram_num):
 
     return lang_profiles
 
-def create_lang_vocabs(train_dict, ngram_num):
+def create_lang_vocabs(train_dict, ngram_num=3):
     lang_vocabs = {}
     print(f"NUmber of languages: {len(train_dict.items())}")
     for i, (k, v) in enumerate(train_dict.items()):
         print(f"Language: {k}")
         # print(f"language: {i}")
-        lang_model = MLE(ngram_num)
+        lang_model = KneserNeyInterpolated(ngram_num)
         char_doclist = [list(subdoc) for (_, subdoc) in v]
         # print(f"Char doc list len: {len(char_doclist)}")
         # padded_text = list(pad_sequence(subdoc, pad_left = True, 
@@ -87,6 +87,7 @@ def predict_language_from_vocabs(text, lang_vocabs, ngram_num):
                                                     pad_right = True,
                                                     right_pad_symbol = "</s>",
                                                     n = ngram_num))
+    print(f"Padded text data: {text_data}")
     scores = {}
     for lang, vocab in lang_vocabs.items():
         scores[lang] = vocab.perplexity(text_data)
@@ -166,7 +167,7 @@ else:
 # pos = 0
 from sklearn.metrics import accuracy_score,f1_score
 
-prediction = predict_language_from_vocabs("el libro fue muy viejo", models, args.ngram)
+prediction = predict_language_from_vocabs("El libro fue muy viejo y no sé porque este trabajo es tan difícil. Quiero dormir.", models, args.ngram)
 print(f"Prediction: {prediction}")
 # y_labels = []
 # y_preds = []
