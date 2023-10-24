@@ -9,7 +9,10 @@ import random
 from nltk.lm import KneserNeyInterpolated, WittenBellInterpolated
 from nltk.util import pad_sequence, everygrams
 from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.lm.preprocessing import padded_everygram_pipeline
+from nltk.lm.preprocessing import padded_everygram_pipeline, flatten
+from nltk.lm import Vocabulary
+from collections import Counter
+
 
 nltk.download('punkt')
 
@@ -36,17 +39,20 @@ def create_lang_vocabs(train_dict, ngram_num=3):
     for i, (k, v) in enumerate(train_dict.items()):
         print(f"Language: {k}")
         # print(f"language: {i}")
-        lang_model = WittenBellInterpolated(ngram_num)
+
         char_doclist = [list(subdoc) for (_, subdoc) in v]
-        # print(f"Char doc list len: {len(char_doclist)}")
-        # padded_text = list(pad_sequence(subdoc, pad_left = True, 
-        #                                  left_pad_symbol = "<s>",
-        #                                  pad_right = True,
-        #                                  right_pad_symbol = "</s>",
-        #                                  n = ngram_num))
-        # padded_ngrams = list(everygrams(padded_text, max_len = ngram_num))
         train, vocab = padded_everygram_pipeline(ngram_num, char_doclist)
-        lang_model.fit(train, vocab)
+
+        flat_train_data = list(flatten(train))
+        flat_vocab_data = list(flatten(vocab))
+
+        vocabulary = Vocabulary(flat_vocab_data, unk_cutoff=2)
+        counter = Counter(flat_train_data)
+
+        # Initialize the KneserNey model
+        lang_model = KneserNeyInterpolated(vocabulary=vocabulary, counter=counter, order=3, discount=0.1)
+        # lang_model = KneserNeyInterpolated(ngram_num)
+        # lang_model.fit(train, vocab)
         lang_vocabs[k] = lang_model
     return lang_vocabs
 
