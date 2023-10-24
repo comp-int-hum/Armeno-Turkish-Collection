@@ -15,6 +15,31 @@ nltk.download('punkt')
 
 warnings.simplefilter("ignore")
 
+def compute_confusion_matrix(y_true, y_pred):
+    classes = set(y_true)
+    matrix = {c: {c_prime: 0 for c_prime in classes} for c in classes}
+    
+    for true, pred in zip(y_true, y_pred):
+        matrix[true][pred] += 1
+        
+    return matrix
+
+def compute_scores(matrix):
+    classes = matrix.keys()
+    tp = {c: matrix[c][c] for c in classes}
+    fp = {c: sum([matrix[k][c] for k in classes]) - tp[c] for c in classes}
+    fn = {c: sum([matrix[c][k] for k in classes]) - tp[c] for c in classes}
+    
+    precision = {c: tp[c] / (tp[c] + fp[c]) if tp[c] + fp[c] != 0 else 0 for c in classes}
+    recall = {c: tp[c] / (tp[c] + fn[c]) if tp[c] + fn[c] != 0 else 0 for c in classes}
+    
+    f1 = {c: 2 * (precision[c] * recall[c]) / (precision[c] + recall[c]) if precision[c] + recall[c] != 0 else 0 for c in classes}
+    
+    macro_f1 = sum(f1.values()) / len(classes)
+    accuracy = sum(tp.values()) / sum([sum(row.values()) for row in matrix.values()])
+    
+    return accuracy, macro_f1
+
 def update_lang_profile(profile, doc, ngram_num):
     for n in range(1, ngram_num+1):
         profile.update(character_ngram_as_tuple(doc, n))
@@ -32,10 +57,12 @@ def create_lang_profiles(train_dict, ngram_num):
 
 def create_lang_vocabs(train_dict, ngram_num):
     lang_vocabs = {}
-    for k, v in train_dict.items():
+    print(f"NUmber of languages: {len(train_dict.items())}")
+    for i, (k, v) in enumerate(train_dict.items()):
+        print(f"language: {i}")
         lang_model = MLE(ngram_num)
         char_doclist = [list(subdoc) for (_, subdoc) in v]
-        print(f"Char doc list len: {len(char_doclist)}")
+        # print(f"Char doc list len: {len(char_doclist)}")
         # padded_text = list(pad_sequence(subdoc, pad_left = True, 
         #                                  left_pad_symbol = "<s>",
         #                                  pad_right = True,
@@ -170,6 +197,11 @@ for lang, docs in test.items():
     #     correct += 1
     # total += 1
 
+confusion_matrix = compute_confusion_matrix(y_labels, y_preds)
+accuracy, macro_f1 = compute_scores(confusion_matrix)
+
+print(f"Accuracy: {accuracy}")
+print(f"F1-score: {macro_f1}")
 model = lang_vocabs if args.ranked == 0 else lang_profiles
 metrics  = {
     "ac":  accuracy_score(y_labels, y_preds),

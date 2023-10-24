@@ -40,7 +40,7 @@ vars.AddVariables(
     ("DATA_LAKE_FILE", "", None),
     ("MAX_DOC_LENGTH","", 1000),
     ("RANKED", "", 0),
-    ("USE_MIN_SUBDOCS", "", 1)
+    ("USE_MIN_SUBDOCS", "", 0)
 )
 
 env = Environment(
