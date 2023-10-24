@@ -6,7 +6,7 @@ import json
 import nltk
 from nltk import FreqDist
 import random
-from nltk.lm import KneserNeyInterpolated
+from nltk.lm import KneserNeyInterpolated, WittenBellInterpolated
 from nltk.util import pad_sequence, everygrams
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.lm.preprocessing import padded_everygram_pipeline
@@ -36,7 +36,7 @@ def create_lang_vocabs(train_dict, ngram_num=3):
     for i, (k, v) in enumerate(train_dict.items()):
         print(f"Language: {k}")
         # print(f"language: {i}")
-        lang_model = KneserNeyInterpolated(ngram_num)
+        lang_model = WittenBellInterpolated(ngram_num)
         char_doclist = [list(subdoc) for (_, subdoc) in v]
         # print(f"Char doc list len: {len(char_doclist)}")
         # padded_text = list(pad_sequence(subdoc, pad_left = True, 
@@ -167,7 +167,8 @@ else:
 # pos = 0
 from sklearn.metrics import accuracy_score,f1_score
 
-prediction = predict_language_from_vocabs("Yo, Juan Gallo de Andrada, escribano de Cámara del Rey nuestro señor, de los que residen en su Consejo, certifico y doy fe que, habiendo visto por los señores dél un libro intitulado El ingenioso hidalgo de la Mancha, compuesto por Miguel de Cervantes Saavedra, tasaron cada pliego del dicho libro a tres maravedís y medio; el cual tiene ochenta y tres pliegos, que al dicho precio monta el dicho libro docientos y noventa maravedís y medio, en que se ha de vender en papel; y dieron licencia para que a este precio se pueda vender, y mandaron que esta tasa se ponga al principio del dicho libro, y no se pueda vender sin ella. Y, para que dello conste, di la presente en Valladolid, a veinte días del mes de deciembre de mil y seiscientos y cuatro años.", models, args.ngram)
+to_predict = "Yo, Juan Gallo de Andrada, escribano de Cámara del Rey nuestro señor, de los que residen en su Consejo, certifico y doy fe que, habiendo visto por los señores dél un libro intitulado El ingenioso hidalgo de la Mancha, compuesto por Miguel de Cervantes Saavedra, tasaron cada pliego del dicho libro a tres maravedís y medio; el cual tiene ochenta y tres pliegos, que al dicho precio monta el dicho libro docientos y noventa maravedís y medio, en que se ha de vender en papel; y dieron licencia para que a este precio se pueda vender, y mandaron que esta tasa se ponga al principio del dicho libro, y no se pueda vender sin ella. Y, para que dello conste, di la presente en Valladolid, a veinte días del mes de deciembre de mil y seiscientos y cuatro años."
+prediction = predict_language_from_vocabs(to_predict, models, args.ngram)
 print(f"Prediction: {prediction}")
 # y_labels = []
 # y_preds = []
