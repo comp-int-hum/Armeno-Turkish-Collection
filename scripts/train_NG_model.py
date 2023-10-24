@@ -188,6 +188,7 @@ print(f"Prediction: {prediction}")
 
 # metrics = json.dumps(metrics)
 with gzip.open(args.model, "wb") as ofd:
+    print("Wrote out model")
     ofd.write(pickle.dumps(model))
     
 # with gzip.open("vectorizer.pickle.gz", "wb") as ofd:

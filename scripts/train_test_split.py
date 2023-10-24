@@ -11,9 +11,7 @@ def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 50
     print("Min subdoc", min_subdoc_num)
     for k, v in lang_dict.items():
         subdoc_num = min_subdoc_num if use_min else len(v)
-        print(f"Subdoc num: {subdoc_num}")
         train_size = max(int(train_ratio * subdoc_num), 1)
-        print(f"Train size: {train_size}")
         train_set[k] = []
         test_set[k] = []
         random.shuffle(v)
@@ -28,8 +26,10 @@ def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 50
         random.shuffle(test_set[k])
         train_set[k] = train_set[k][:max_size]
         test_set[k] = test_set[k][:int(max_size * (1 - train_ratio))]
-    print("Train set size", len(train_set))
-    print("Test set size", len(test_set))
+        print(f"Train size: {len(train_set(k))}")
+        print(f"Test set size: {len(test_set[k])}")
+    print("Overeall train size", len(train_set))
+    print("Overall test size", len(test_set))
     return train_set, test_set
 
 def get_min_subdocs(lang_dict):
