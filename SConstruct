@@ -40,7 +40,8 @@ vars.AddVariables(
     ("DATA_LAKE_FILE", "", None),
     ("MAX_DOC_LENGTH","", 1000),
     ("RANKED", "", 0),
-    ("USE_MIN_SUBDOCS", "", 0)
+    ("USE_MIN_SUBDOCS", "", 0),
+    ("PRETRAINED", "", "work/ng_model.pk1.gz")
 )
 
 env = Environment(
@@ -79,7 +80,7 @@ env = Environment(
 	    	action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
 		),
         "TrainNGModel" : Builder(
-	    	action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores ${TARGETS[1]} --ngram ${N} --ranked ${RANKED}"
+	    	action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores ${TARGETS[1]} --ngram ${N} --ranked ${RANKED} --load_model ${PRETRAINED}"
 		),
         "GenerateFinalCorpus" : Builder(
             action="python scripts/generate_final_corpus.py --to_annotate ${SOURCES[0]} --score_files ${SOURCES[1:]} --report ${TARGETS[0]} --corpus ${TARGETS[1]}"
