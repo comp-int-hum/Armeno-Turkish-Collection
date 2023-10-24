@@ -11,10 +11,17 @@ from nltk.util import pad_sequence, everygrams
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.lm.preprocessing import padded_everygram_pipeline, flatten
 from nltk.lm import Vocabulary
-from collections import Counter
+from collections import Counter, defaultdict
 
 
 nltk.download('punkt')
+
+def generate_nested_counts(data):
+    counts = defaultdict(lambda: defaultdict(int))
+    for ngram in data:
+        context, token = tuple(ngram[:-1]), ngram[-1]
+        counts[context][token] += 1
+    return counts
 
 warnings.simplefilter("ignore")
 
@@ -39,15 +46,17 @@ def create_lang_vocabs(train_dict, ngram_num=3):
     for i, (k, v) in enumerate(train_dict.items()):
         print(f"Language: {k}")
         # print(f"language: {i}")
+        if k == "spa_Latin":
+            print(f"Result: {v}")
 
         char_doclist = [list(subdoc) for (_, subdoc) in v]
         train, vocab = padded_everygram_pipeline(ngram_num, char_doclist)
 
         flat_train_data = list(flatten(train))
+        counter = generate_nested_counts(flat_train_data)
         flat_vocab_data = list(flatten(vocab))
 
         vocabulary = Vocabulary(flat_vocab_data, unk_cutoff=2)
-        counter = Counter(flat_train_data)
 
         # Initialize the KneserNey model
         lang_model = KneserNeyInterpolated(vocabulary=vocabulary, counter=counter, order=3, discount=0.1)
