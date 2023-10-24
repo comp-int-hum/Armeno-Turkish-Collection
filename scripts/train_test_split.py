@@ -3,7 +3,7 @@ import gzip
 import random
 import json
 
-def train_test_split(lang_dict, train_ratio, random_seed, use_min):
+def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 500):
     random.seed(random_seed)
     train_set = {}
     test_set = {}
@@ -24,6 +24,10 @@ def train_test_split(lang_dict, train_ratio, random_seed, use_min):
                 train_set[k].append((htid, subdoc))
             else:
                 test_set[k].append((htid, subdoc))
+        random.shuffle(train_set[k])
+        random.shuffle(test_set[k])
+        train_set[k] = train_set[k][:max_size]
+        test_set[k] = test_set[k][:int(max_size * (1 - train_ratio))]
     print("Train set size", len(train_set))
     print("Test set size", len(test_set))
     return train_set, test_set

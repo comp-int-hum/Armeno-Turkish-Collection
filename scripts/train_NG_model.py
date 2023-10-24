@@ -15,31 +15,6 @@ nltk.download('punkt')
 
 warnings.simplefilter("ignore")
 
-def compute_confusion_matrix(y_true, y_pred):
-    classes = set(y_true)
-    matrix = {c: {c_prime: 0 for c_prime in classes} for c in classes}
-    
-    for true, pred in zip(y_true, y_pred):
-        matrix[true][pred] += 1
-        
-    return matrix
-
-def compute_scores(matrix):
-    classes = matrix.keys()
-    tp = {c: matrix[c][c] for c in classes}
-    fp = {c: sum([matrix[k][c] for k in classes]) - tp[c] for c in classes}
-    fn = {c: sum([matrix[c][k] for k in classes]) - tp[c] for c in classes}
-    
-    precision = {c: tp[c] / (tp[c] + fp[c]) if tp[c] + fp[c] != 0 else 0 for c in classes}
-    recall = {c: tp[c] / (tp[c] + fn[c]) if tp[c] + fn[c] != 0 else 0 for c in classes}
-    
-    f1 = {c: 2 * (precision[c] * recall[c]) / (precision[c] + recall[c]) if precision[c] + recall[c] != 0 else 0 for c in classes}
-    
-    macro_f1 = sum(f1.values()) / len(classes)
-    accuracy = sum(tp.values()) / sum([sum(row.values()) for row in matrix.values()])
-    
-    return accuracy, macro_f1
-
 def update_lang_profile(profile, doc, ngram_num):
     for n in range(1, ngram_num+1):
         profile.update(character_ngram_as_tuple(doc, n))
@@ -138,12 +113,14 @@ if __name__ == "__main__":
     parser.add_argument("--input", dest="input", nargs = 2, help="Input file")
     parser.add_argument("--ngram", dest="ngram", type = int, help="Ngram number")
     parser.add_argument("--ranked", dest="ranked", type = int, help = "If 0, then perplexity else rank list size")
+    parser.add_argument("--load_model", dest="pretrained", default=None)
     args, rest = parser.parse_known_args()
 
 #Creating content, label and title lists
 X = []
 y = []
 ids = []
+print("NEW RUN")
 
 lang_dict = {}
 with open(args.input[0], "r") as train_input:
@@ -152,6 +129,16 @@ with open(args.input[0], "r") as train_input:
 with open(args.input[1], "r") as test_input:
     test = json.load(test_input)
 
+if args.pretrained:
+    print("Loaded ngram model")
+    with gzip.open(args.model, 'rb') as ifd:
+        model = pickle.loads(ifd.read())
+else:
+    print("Creating new ngram model")
+    if args.ranked == 0:
+        models = create_lang_vocabs(train, args.ngram)
+    else:
+        models = create_lang_profiles(train, args.ngram)
     # for line in train_input:
     #     data = json.loads(line)
     #     label = data['label']
@@ -166,12 +153,6 @@ with open(args.input[1], "r") as test_input:
 #         print("Empty key: ", k)
 
 
-print("NEW RUN")
-if args.ranked == 0:
-    lang_vocabs = create_lang_vocabs(train, args.ngram)
-	
-else:
-    lang_profiles = create_lang_profiles(train, args.ngram)
 
 
 # precision = tp / (tp + fp)
@@ -184,32 +165,28 @@ else:
 # pos = 0
 from sklearn.metrics import accuracy_score,f1_score
 
-y_labels = []
-y_preds = []
-for lang, docs in test.items():
-    for (_, doc) in docs:
-        y_labels.append(lang)
-        if args.ranked == 0:
-            y_preds.append(predict_language_from_vocabs(doc, lang_vocabs, args.ngram))
-        else:
-            y_preds.append(predict_language_from_profiles(doc, lang_profiles, args.ngram, args.ranked))
+prediction = predict_language_from_vocabs("el libro fue muy viejo")
+print(f"Prediction: {prediction}")
+# y_labels = []
+# y_preds = []
+# for lang, docs in test.items():
+#     for (_, doc) in docs:
+#         y_labels.append(lang)
+#         if args.ranked == 0:
+#             y_preds.append(predict_language_from_vocabs(doc, models, args.ngram))
+#         else:
+#             y_preds.append(predict_language_from_profiles(doc, models, args.ngram, args.ranked))
     
     #     correct += 1
     # total += 1
 
-confusion_matrix = compute_confusion_matrix(y_labels, y_preds)
-accuracy, macro_f1 = compute_scores(confusion_matrix)
+# metrics  = {
+#     "ac":  accuracy_score(y_labels, y_preds),
+# #   cm: confusion_matrix(y_test, y_pred)                                                                                           
+#     "fscore" : f1_score(y_labels, y_preds, average='macro')
+#     }
 
-print(f"Accuracy: {accuracy}")
-print(f"F1-score: {macro_f1}")
-model = lang_vocabs if args.ranked == 0 else lang_profiles
-metrics  = {
-    "ac":  accuracy_score(y_labels, y_preds),
-#   cm: confusion_matrix(y_test, y_pred)                                                                                           
-    "fscore" : f1_score(y_labels, y_preds, average='macro')
-    }
-
-metrics = json.dumps(metrics)
+# metrics = json.dumps(metrics)
 with gzip.open(args.model, "wb") as ofd:
     ofd.write(pickle.dumps(model))
     
@@ -219,5 +196,5 @@ with gzip.open(args.model, "wb") as ofd:
 #pickle.dump(cv, open("vectorizer.pickle", "wb"))
 #saving the scores
 
-with open(args.scores, "wt") as ofd:
-    ofd.write(metrics)
+# with open(args.scores, "wt") as ofd:
+#     ofd.write(metrics)
