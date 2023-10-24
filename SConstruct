@@ -41,7 +41,8 @@ vars.AddVariables(
     ("MAX_DOC_LENGTH","", 1000),
     ("RANKED", "", 0),
     ("USE_MIN_SUBDOCS", "", 0),
-    ("PRETRAINED", "", "work/ng_model.pk1.gz")
+    # ("PRETRAINED", "", "work/ng_model.pk1.gz"),
+    ("PRETRAINED", "", "None"),
 )
 
 env = Environment(

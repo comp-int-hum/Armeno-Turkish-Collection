@@ -34,7 +34,8 @@ def create_lang_vocabs(train_dict, ngram_num):
     lang_vocabs = {}
     print(f"NUmber of languages: {len(train_dict.items())}")
     for i, (k, v) in enumerate(train_dict.items()):
-        print(f"language: {i}")
+        print(f"Language: {k}")
+        # print(f"language: {i}")
         lang_model = MLE(ngram_num)
         char_doclist = [list(subdoc) for (_, subdoc) in v]
         # print(f"Char doc list len: {len(char_doclist)}")
@@ -129,10 +130,10 @@ with open(args.input[0], "r") as train_input:
 with open(args.input[1], "r") as test_input:
     test = json.load(test_input)
 
-if args.pretrained:
+if args.pretrained != "None":
     print("Loaded ngram model")
     with gzip.open(args.model, 'rb') as ifd:
-        model = pickle.loads(ifd.read())
+        models = pickle.loads(ifd.read())
 else:
     print("Creating new ngram model")
     if args.ranked == 0:
@@ -165,7 +166,7 @@ else:
 # pos = 0
 from sklearn.metrics import accuracy_score,f1_score
 
-prediction = predict_language_from_vocabs("el libro fue muy viejo")
+prediction = predict_language_from_vocabs("el libro fue muy viejo", models, args.ngram)
 print(f"Prediction: {prediction}")
 # y_labels = []
 # y_preds = []
@@ -189,7 +190,7 @@ print(f"Prediction: {prediction}")
 # metrics = json.dumps(metrics)
 with gzip.open(args.model, "wb") as ofd:
     print("Wrote out model")
-    ofd.write(pickle.dumps(model))
+    ofd.write(pickle.dumps(models))
     
 # with gzip.open("vectorizer.pickle.gz", "wb") as ofd:
 #     ofd.write(pickle.dumps())

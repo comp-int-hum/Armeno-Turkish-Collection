@@ -26,7 +26,7 @@ def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 50
         random.shuffle(test_set[k])
         train_set[k] = train_set[k][:max_size]
         test_set[k] = test_set[k][:int(max_size * (1 - train_ratio))]
-        print(f"Train size: {len(train_set(k))}")
+        print(f"Train size: {len(train_set[k])}")
         print(f"Test set size: {len(test_set[k])}")
     print("Overeall train size", len(train_set))
     print("Overall test size", len(test_set))
