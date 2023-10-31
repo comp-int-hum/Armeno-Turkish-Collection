@@ -98,11 +98,11 @@ if __name__ == "__main__":
     assert(args.ratio >= 0.0)
     
     train, test, ta = train_test_split(lang_dict, args.ratio, args.random_seed, args.min != 0)
-    with open(args.outputs[0], "w") as train_output:
+    with gzip.open(args.outputs[0], "wt") as train_output:
         train_output.write(json.dumps(train))
     
-    with open(args.outputs[1], "w") as test_output:
+    with gzip.open(args.outputs[1], "wt") as test_output:
         test_output.write(json.dumps(test))
 
-    with open(args.outputs[2], "w") as ta_output:
+    with gzip.open(args.outputs[2], "wt") as ta_output:
         ta_output.write(json.dumps(ta))

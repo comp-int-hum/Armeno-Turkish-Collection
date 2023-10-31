@@ -68,7 +68,7 @@ env = Environment(
         "GenerateNegativeExamples" : Builder(
             action="python scripts/generate_negative_examples.py --hathitrust_index ${HATHITRUST_INDEX} --marc_index ${MARC_INDEX} --per_language ${PER_LANGUAGE} --output ${TARGETS[0]} --random_seed ${RANDOM_SEED} --hathitrust_root ${HATHITRUST_ROOT}"
         ),
-		"CleanChunkExamples" : Builder(
+	"CleanChunkExamples" : Builder(
             action="python scripts/clean_chunk_examples.py --input ${SOURCES[0]} --max_doc_length ${MAX_DOC_LENGTH} --output ${TARGETS[0]}"
         ),
         "TrainTestSplit" : Builder(
@@ -81,8 +81,11 @@ env = Environment(
 	    	action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
 		),
         "TrainNGModel" : Builder(
-	    	action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores ${TARGETS[1]} --ngram ${N} --ranked ${RANKED} --load_model ${PRETRAINED}"
+	    	action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores --ngram ${N}"
 		),
+        "TestModel" : Builder(
+            action="python scripts/test_model.py --model ${SOURCES[0]} --input ${SOURCES[1]} --scores ${TARGETS[0]} --ngram ${N}"
+        ),
         "GenerateFinalCorpus" : Builder(
             action="python scripts/generate_final_corpus.py --to_annotate ${SOURCES[0]} --score_files ${SOURCES[1:]} --report ${TARGETS[0]} --corpus ${TARGETS[1]}"
         )
@@ -90,8 +93,8 @@ env = Environment(
 )
 
 armeno_turkish = env.CollectionToJSON(
-    ["work/True_AT_set.jsonl.gz"],
-    ["data/True_AT.tsv.gz"],
+    "work/True_AT_set.jsonl.gz",
+    "data/True_AT.tsv.gz",
     LABEL="armeno_turkish"
 )
 
@@ -101,8 +104,8 @@ negative_examples = env.GenerateNegativeExamples(
 )
 
 armeno_turkish_with_content = env.ExpandEntries(
-    ["work/labeled_with_content.jsonl.gz"],
-    [armeno_turkish]
+    "work/labeled_with_content.jsonl.gz",
+    armeno_turkish
 )
 
 combined = env.MergeEntries(
@@ -110,9 +113,8 @@ combined = env.MergeEntries(
     [armeno_turkish_with_content, negative_examples]
 )
 combined_cleaned_chunked = env.CleanChunkExamples(
-    ["work/chunked_combined.json.gz"],
-    ["work/combined.jsonl.gz"],
-    []
+    "work/chunked_combined.json.gz",
+    "work/combined.jsonl.gz",
 )
 
 # if the data lake file is specified in config.py, no need to build it
@@ -120,18 +122,18 @@ if env.get("DATA_LAKE_FILE", None):
     data_lake_with_content = env.File(env["DATA_LAKE_FILE"])
 else:
     data_lake = env.FilterMarc(
-        ["work/data_lake.jsonl.gz"],
+        "work/data_lake.jsonl.gz",
         [],
         REGEXES=[]
     )
     data_lake_with_content = env.ExpandEntries(
-        ["work/data_lake_with_content.jsonl.gz"],
-        [data_lake]
+        "work/data_lake_with_content.jsonl.gz",
+        data_lake
     )
     
 train, test, ta_test = env.TrainTestSplit(
-    ["work/train_data.json", "work/test_data.json", "work/ta_test.json"],
-    [combined_cleaned_chunked]
+   ["work/train_data.json.gz", "work/test_data.json.gz", "work/ta_test.json.gz"],
+   combined_cleaned_chunked
 )
 
 # model, scores = env.TrainNBModel(
@@ -144,9 +146,14 @@ train, test, ta_test = env.TrainTestSplit(
 #     [train, test]
 # )
 
-ngram_model, ngram_scores = env.TrainNGModel(
-    ["work/ng_model.pk1.gz", "work/ng_scores.json"],
-    [train, test, ta_test]
+model = env.TrainNGModel(
+    "work/ng_model.pkl.gz",
+    train
+)
+
+scores = env.TestModel(
+    "work/scores.json",
+    [model, test]
 )
 
 # model, scores = env.TrainNBModel(
