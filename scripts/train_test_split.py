@@ -27,22 +27,28 @@ def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 20
                 test_set[k].append((htid, subdoc))
         random.shuffle(train_set[k])
         random.shuffle(test_set[k])
+        if k == "tur_Armenian":
+            pos = train_set[k][:200]
         train_set[k] = train_set[k][:max_size]
         test_set[k] = test_set[k][:int(max_size * (1 - train_ratio))]
     print("Overall train size", len(train_set))
     print("Overall test size", len(test_set))
-    ta_test_set = make_ta_set(test_set, max_size = 200)
+    ta_test_set = make_ta_set(test_set, pos, max_size = 200)
     return train_set, test_set, ta_test_set
 
-def make_ta_set(test_set, max_size):
+def make_ta_set(test_set, pos, max_size):
     ta_test_set = {}
-    ta_test_set["positive"] = test_set["tur_Armenian"][:max_size]
+    ta_test_set["positive"] = pos
     negative_examples = list(test_set.keys())
     negative_examples.remove("tur_Armenian")
     negative_examples = [doc for key in test_set.keys() for doc in test_set[key]]
     ta_test_set["negative"] = random.sample(negative_examples, max_size)
+    negative_len = len(ta_test_set["negative"])
+    positive_len = len(ta_test_set["positive"])
+    print(f"Negative len: {negative_len}")
+    print(f"Positive len: {positive_len}")
     assert(len(ta_test_set["negative"]) == len(ta_test_set["positive"]))
-    print(len(ta_test_set["negative"]))
+
     return ta_test_set
 
 def get_min_subdocs(lang_dict):
