@@ -3,15 +3,21 @@ import gzip
 import random
 import json
 
-def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 500):
+def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 200):
     random.seed(random_seed)
+    print(f"Use min: {use_min}")
+    print(f"Train ratio: {train_ratio}")
     train_set = {}
     test_set = {}
+    ta_test_set = {}
     min_subdoc_num = get_min_subdocs(lang_dict)
-    print("Min subdoc", min_subdoc_num)
+    # print("Min subdoc", min_subdoc_num)
+    ta_positive = 0
     for k, v in lang_dict.items():
         subdoc_num = min_subdoc_num if use_min else len(v)
         train_size = max(int(train_ratio * subdoc_num), 1)
+        if train_size < 5:
+            continue
         train_set[k] = []
         test_set[k] = []
         random.shuffle(v)
@@ -26,11 +32,22 @@ def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 50
         random.shuffle(test_set[k])
         train_set[k] = train_set[k][:max_size]
         test_set[k] = test_set[k][:int(max_size * (1 - train_ratio))]
-        print(f"Train size: {len(train_set[k])}")
-        print(f"Test set size: {len(test_set[k])}")
-    print("Overeall train size", len(train_set))
+        if k == "tur_Armenian":
+            ta_test_set["positive"] = test_set[k][:int(max_size * (1-train_ratio))*2]
+            ta_positive = len(ta_test_set["positive"])
+        # print(f"Train size: {len(train_set[k])}")
+        # print(f"Test set size: {len(test_set[k])}")
+    negative_examples = list(test_set.keys())
+    negative_examples.remove("tur_Armenian")
+    ta_test_set["negative"] = []
+    for i in range(ta_positive):
+        chosen = random.choice(negative_examples)
+        ta_test_set["negative"].append(test_set[chosen][0])
+    assert(len(ta_test_set["negative"]) == len(ta_test_set["positive"]))
+    print(len(ta_test_set["negative"]))
+    print("Overall train size", len(train_set))
     print("Overall test size", len(test_set))
-    return train_set, test_set
+    return train_set, test_set, ta_test_set
 
 def get_min_subdocs(lang_dict):
     return min(len(subdocs) for subdocs in lang_dict.values())
@@ -54,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--random_seed", dest="random_seed", type=int, default=None)
     parser.add_argument("--use_min", dest="min", type=int, default=0)
     parser.add_argument("--train_ratio", dest="ratio", type = float, help = "fraction of data for training")
-    parser.add_argument("--outputs", dest="outputs", nargs = 2, help= "names for train and test files")
+    parser.add_argument("--outputs", dest="outputs", nargs = 3, help= "names for train and test files")
     args, rest = parser.parse_known_args()
     
     lang_dict = {}
@@ -77,10 +94,13 @@ if __name__ == "__main__":
 
     assert(args.ratio <= 1.0)
     assert(args.ratio >= 0.0)
-    train, test = train_test_split(lang_dict, args.ratio, args.random_seed, args.min != 0)
+    
+    train, test, ta = train_test_split(lang_dict, args.ratio, args.random_seed, args.min != 0)
     with open(args.outputs[0], "w") as train_output:
         train_output.write(json.dumps(train))
     
     with open(args.outputs[1], "w") as test_output:
         test_output.write(json.dumps(test))
 
+    with open(args.outputs[2], "w") as ta_output:
+        ta_output.write(json.dumps(ta))

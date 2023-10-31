@@ -129,8 +129,8 @@ else:
         [data_lake]
     )
     
-train, test = env.TrainTestSplit(
-    ["work/train_data.json", "work/test_data.json"],
+train, test, ta_test = env.TrainTestSplit(
+    ["work/train_data.json", "work/test_data.json", "work/ta_test.json"],
     [combined_cleaned_chunked]
 )
 
@@ -146,7 +146,7 @@ train, test = env.TrainTestSplit(
 
 ngram_model, ngram_scores = env.TrainNGModel(
     ["work/ng_model.pk1.gz", "work/ng_scores.json"],
-    [train, test]
+    [train, test, ta_test]
 )
 
 # model, scores = env.TrainNBModel(
