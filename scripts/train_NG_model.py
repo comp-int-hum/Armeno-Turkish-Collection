@@ -7,7 +7,7 @@ import nltk
 from nltk import FreqDist
 import random
 from nltk.lm import KneserNeyInterpolated, WittenBellInterpolated, Laplace
-from nltk.util import pad_sequence, everygrams
+from nltk.util import pad_sequence, everygrams, ngrams
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.lm.preprocessing import padded_everygram_pipeline, flatten
 from nltk.lm import Vocabulary
@@ -107,19 +107,9 @@ def predict_language_from_profiles(text, lang_profiles, ngram_num, max_size):
     return min(scores, key=scores.get)
 
 def predict_language_from_vocabs(text, lang_vocabs, ngram_num):
-    # tokenized_text = [word_tokenize(sent) for sent in sent_tokenize(text)]
-
-    # text_data = list(pad_sequence(tokenized_text, pad_left = True, 
-    # left_pad_symbol = "<s>",
-    #                                                 pad_right = True,
-    #                                                 right_pad_symbol = "</s>",
-    #                                                 n = ngram_num))
     tokenized_text = list(text)
     padded_text = list(pad_sequence(tokenized_text, ngram_num, pad_left = True, pad_right = True, left_pad_symbol = "<s>", right_pad_symbol="</s>"))
-    test_data = get_ngrams(padded_text, ngram_num)
-    # print(f"Test data type: {type(test_data)}")
-    # print(f"Element type: {type(test_data[0])}")
-    # print(f"Padded text data: {test_data}")
+    test_data = list(ngrams(padded_text, ngram_num))
     scores = {}
     for lang, vocab in lang_vocabs.items():
         scores[lang] = vocab.perplexity(test_data)
@@ -165,6 +155,7 @@ with open(args.input[1], "r") as test_input:
 
 with open(args.input[2], "r") as ta_input:
     ta_test = json.load(ta_input)
+
 if args.pretrained != "None":
     print("Loaded ngram model")
     with gzip.open(args.model, 'rb') as ifd:
@@ -235,6 +226,8 @@ ta_correct = 0
 
 print(f"ta test type: {type(ta_test)}")
 pos_len = len(ta_test["positive"])
+neg_len = len(ta_test["negative"])
+# cases = ["positive", "negative"]
 for i in range(len(ta_test["positive"])):
     doc = ta_test["positive"][i]
     if args.ranked == 0:
@@ -256,7 +249,7 @@ for i in range(len(ta_test["negative"])):
         not_ta_correct += 1
 
 print(f"TA correct: {ta_correct} {pos_len}")
-print(f"Non_TA correct: {not_ta_correct} {pos_len}")
+print(f"Non_TA correct: {not_ta_correct} {neg_len}")
 
         
         
