@@ -30,7 +30,7 @@ def create_lang_vocabs(train_dict, ngram_num=3):
     print(f"NUmber of languages: {len(train_dict.items())}")
     for i, (k, v) in enumerate(train_dict.items()):
         print(f"Language: {k}")
-		print(f"Type of subdoc: {type(v[0])}")
+        print(f"Type of subdoc: {type(v[0])}")
         text_list = [list(subdoc) for (_, subdoc) in v]
         train, vocab = train_preprocessing(ngram_num, text_list)
         lang_model = KneserNeyInterpolated(order = ngram_num)
@@ -81,7 +81,7 @@ if args.pretrained != "None":
         models = pickle.loads(ifd.read())
 else:
     print("Creating new ngram model")
-	models = create_lang_vocabs(train, args.ngram)
+    models = create_lang_vocabs(train, args.ngram)
 
 
 
