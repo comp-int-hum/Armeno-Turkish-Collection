@@ -70,7 +70,7 @@ def create_lang_vocabs(train_dict, ngram_num=3):
 
         # Initialize the KneserNey model
         # lang_model = KneserNeyInterpolated(vocabulary=vocabulary, counter=counter, order=3, discount=0.1)
-        lang_model = Laplace(order = ngram_num)
+        lang_model = KneserNeyInterpolated(order = ngram_num)
         lang_model.fit(train, vocab)
         # lang_model = KneserNeyInterpolated(ngram_num)
         # lang_model.fit(train, vocab)
@@ -111,7 +111,11 @@ def predict_language_from_vocabs(text, lang_vocabs, ngram_num):
     padded_text = list(pad_sequence(tokenized_text, ngram_num, pad_left = True, pad_right = True, left_pad_symbol = "<s>", right_pad_symbol="</s>"))
     test_data = list(ngrams(padded_text, ngram_num))
     scores = {}
+    print(f"before perplexity: {len(lang_vocabs.items())}")
+    i = 0
     for lang, vocab in lang_vocabs.items():
+        print(f"Vocab items {i}")
+        i+= 1
         scores[lang] = vocab.perplexity(test_data)
     return min(scores, key=scores.get)
 
@@ -201,17 +205,19 @@ y_labels = []
 y_preds = []
 i = 0
 length = len(test.items())
-# for lang, docs in test.items():
-#     print(f"Test num: {i} out of {length}")
-#     i+= 1
-#     for (_, doc) in docs:
-#         y_labels.append(lang)
-#         if args.ranked == 0:
-#             y_preds.append(predict_language_from_vocabs(doc, models, args.ngram))
-#         else:
-#             y_preds.append(predict_language_from_profiles(doc, models, args.ngram, args.ranked))
-    
-        # correct += 1
+for lang, docs in test.items():
+    print(f"Test num: {i} out of {length}")
+    i+= 1
+    for (_, doc) in docs:
+        y_labels.append(lang)
+        if args.ranked == 0:
+            print(f"Before pred")
+            y_preds.append(predict_language_from_vocabs(doc, models, args.ngram))
+            print(f"After pred")
+        else:
+            y_preds.append(predict_language_from_profiles(doc, models, args.ngram, args.ranked))
+  
+       # correct += 1
 #     total += 1
 
 metrics  = {
