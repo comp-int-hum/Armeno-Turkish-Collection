@@ -83,6 +83,9 @@ env = Environment(
         "TrainNGModel" : Builder(
 	    	action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores ${TARGETS[1]} --ngram ${N} --ranked ${RANKED} --load_model ${PRETRAINED}"
 		),
+		"SanityCheck" : Builder(
+	    	action="python scripts/train_NG_model_updated.py --input ${SOURCES} --model ${TARGETS[0]} --scores ${TARGETS[1]} --ngram ${N} --ranked ${RANKED} --load_model ${PRETRAINED}"
+		),
         "GenerateFinalCorpus" : Builder(
             action="python scripts/generate_final_corpus.py --to_annotate ${SOURCES[0]} --score_files ${SOURCES[1:]} --report ${TARGETS[0]} --corpus ${TARGETS[1]}"
         )
@@ -144,7 +147,12 @@ train, test, ta_test = env.TrainTestSplit(
 #     [train, test]
 # )
 
-ngram_model, ngram_scores = env.TrainNGModel(
+# ngram_model, ngram_scores = env.TrainNGModel(
+#     ["work/ng_model.pk1.gz", "work/ng_scores.json"],
+#     [train, test, ta_test]
+# )
+
+ngram_model, ngram_scores = env.SanityCheck(
     ["work/ng_model.pk1.gz", "work/ng_scores.json"],
     [train, test, ta_test]
 )
