@@ -21,6 +21,9 @@ warnings.simplefilter("ignore")
 
 
 def train_preprocessing(ngram_num, text):
+    # print(f"train_preprocess {type(text)}")
+    # print(f"train_preprocess elements {text[0]}")
+
     train, vocab_base = padded_everygram_pipeline(ngram_num, text)
     vocab = Vocabulary(vocab_base, unk_cutoff = 2)
     return train, vocab
@@ -30,8 +33,12 @@ def create_lang_vocabs(train_dict, ngram_num=3):
     print(f"NUmber of languages: {len(train_dict.items())}")
     for i, (k, v) in enumerate(train_dict.items()):
         print(f"Language: {k}")
-        print(f"Type of subdoc: {type(v[0])}")
+        htid, subdoc = v[0]
+        # print(f"htid: {htid}")
+        # print(f"subdoc: {subdoc}")
+        # print(list(subdoc))
         text_list = [list(subdoc) for (_, subdoc) in v]
+        assert(len(text_list) == len(v))
         train, vocab = train_preprocessing(ngram_num, text_list)
         lang_model = KneserNeyInterpolated(order = ngram_num)
         lang_model.fit(train, vocab)
@@ -40,6 +47,7 @@ def create_lang_vocabs(train_dict, ngram_num=3):
 
 
 def predict_language_from_vocabs(text, lang_vocabs, ngram_num):
+    print(f"predict language text type: {type(text)}")
     tokenized_text = list(text)
     padded_text = list(pad_sequence(tokenized_text, ngram_num, pad_left = True, pad_right = True, left_pad_symbol = "<s>", right_pad_symbol="</s>"))
     test_data = list(ngrams(padded_text, ngram_num))
@@ -47,7 +55,7 @@ def predict_language_from_vocabs(text, lang_vocabs, ngram_num):
     print(f"before perplexity: {len(lang_vocabs.items())}")
     i = 0
     for lang, vocab in lang_vocabs.items():
-        print(f"Vocab items {i}")
+        # print(f"Vocab items {i}")
         i+= 1
         scores[lang] = vocab.perplexity(test_data)
     return min(scores, key=scores.get)
@@ -96,9 +104,16 @@ length = len(test.items())
 for lang, docs in test.items():
     print(f"Test num: {i} out of {length}")
     i+= 1
+    total, correct = 0, 0
     for (_, doc) in docs:
         y_labels.append(lang)
-        y_preds.append(predict_language_from_vocabs(doc, models, args.ngram))
+        pred = predict_language_from_vocabs(doc, models, args.ngram)
+        y_preds.append(pred)
+        if lang == pred:
+            correct += 1
+        total += 1
+    print(f"Result for {lang} is {correct} / {total}")
+        
 
 metrics  = {
     "ac":  accuracy_score(y_labels, y_preds),                                                                                        
