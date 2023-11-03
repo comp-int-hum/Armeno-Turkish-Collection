@@ -43,6 +43,8 @@ vars.AddVariables(
     ("USE_MIN_SUBDOCS", "", 0),
     # ("PRETRAINED", "", "work/ng_model.pk1.gz"),
     ("PRETRAINED", "", "None"),
+	("NG_UPPER", "", 4),
+	("NG_LOWER", "", 2)
 )
 
 env = Environment(
@@ -78,7 +80,7 @@ env = Environment(
             action="python scripts/apply_fasttext.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
         ),
         "TrainNBModel" : Builder(
-	    	action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
+	    	action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]} --ngram_lower ${NG_LOWER} --ngram_upper ${NG_UPPER}"
 		),
         "TrainNGModel" : Builder(
 	    	action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores ${TARGETS[1]} --ngram ${N} --ranked ${RANKED} --load_model ${PRETRAINED}"
@@ -152,15 +154,15 @@ train, test, ta_test = env.TrainTestSplit(
 #     [train, test, ta_test]
 # )
 
-ngram_model, ngram_scores = env.SanityCheck(
-    ["work/ng_model.pk1.gz", "work/ng_scores.json"],
-    [train, test, ta_test]
-)
-
-# model, scores = env.TrainNBModel(
-#     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
-#     ["work/chunked_combined.json.gz"]
+# ngram_model, ngram_scores = env.SanityCheck(
+#     ["work/ng_model.pk1.gz", "work/ng_scores.json"],
+#     [train, test, ta_test]
 # )
+for lower in range(4):
+	for upper in range(lower, 4):
+		model, scores = env.TrainNBModel(
+					["work/nb_model.pk1.gz", "work/nb_scores.json"],
+					["work/chunked_combined.json.gz"], NG_LOWER = lower, NG_UPPER = upper)
 
 # ngram_model, ngram_scores = env.TrainNGModel(
 #     ["work/ng_model.pk1.gz", "work/NG_scores.json"],

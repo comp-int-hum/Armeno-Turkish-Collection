@@ -17,6 +17,8 @@ if __name__ == "__main__":
     parser.add_argument("--scores", dest="scores", help="Output file for scores") 
     parser.add_argument("--input", dest="input", help="Input file")
     parser.add_argument("--vectorizer", dest="vectorizer", help="Output file for vectorizer")
+	parser.add_argument("--ngram_lower", dest="ng_lower", type = int, help="Min ngram to use")
+	parser.add_argument("--ngram_upper", dest="ng_upper", type = int, help="Max ngram to use")
 #   parser.add_argument("--output", dest="output", help="Output file")
     args, rest = parser.parse_known_args()
 
@@ -40,7 +42,7 @@ y = list(zip(y, ids))
 
 
 # Not understanding why there is a token pattern and also analyzer = 'char'
-cv = CountVectorizer(ngram_range=(2, 2), token_pattern = r"(?u)\b\w+\b", analyzer='char')
+cv = CountVectorizer(ngram_range=(args.ng_lower, args.ng_upper), token_pattern = r"(?u)\b\w+\b", analyzer='char')
 X = cv.fit_transform(X)
 
 #train test splitting
@@ -66,17 +68,17 @@ metrics  = {
     }
 
 metrics = json.dumps(metrics)
-with gzip.open("model.pk1.gz", "wb") as ofd:
+with gzip.open(f"model-nb-n{str(args.ng_lower)}-n{str(args.ng_upper)}.pk1.gz", "wb") as ofd:
     ofd.write(pickle.dumps(model))
     
-with gzip.open("vectorizer.pickle.gz", "wb") as ofd:
+with gzip.open(f"vectorizer-nb-n{str(args.ng_lower)}-n{str(args.ng_upper)}.pickle.gz", "wb") as ofd:
     ofd.write(pickle.dumps(cv))
 
 #pickle.dump(cv, open("vectorizer.pickle", "wb"))
 #saving the scores
 
-with open(args.scores, "wt") as ofd:
-    ofd.write(metrics)
+with open(args.scores, "at") as ofd:
+    ofd.write(f"\n{metrics}")
    
    
    
