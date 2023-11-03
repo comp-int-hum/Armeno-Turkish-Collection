@@ -3,16 +3,17 @@ import gzip
 import random
 import json
 
-def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 200):
+def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 500):
     random.seed(random_seed)
     print(f"Use min: {use_min}")
     train_set = {}
     test_set = {}
+    train_max_size = max_size
+    # test_max_size = int(max_size * (1 - train_ratio))
     min_subdoc_num = get_min_subdocs(lang_dict)
-    # print("Min subdoc", min_subdoc_num)
     for k, v in lang_dict.items():
         subdoc_num = min_subdoc_num if use_min else len(v)
-        train_size = max(int(train_ratio * subdoc_num), 1)
+        train_size = int(train_ratio * subdoc_num)
         if train_size < 5:
             continue
         train_set[k] = []
@@ -27,29 +28,11 @@ def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 20
                 test_set[k].append((htid, subdoc))
         random.shuffle(train_set[k])
         random.shuffle(test_set[k])
-        if k == "tur_Armenian":
-            pos = train_set[k][:200]
-        train_set[k] = train_set[k][:max_size]
-        test_set[k] = test_set[k][:int(max_size * (1 - train_ratio))]
+        train_set[k] = train_set[k][:train_max_size]
     print("Overall train size", len(train_set))
     print("Overall test size", len(test_set))
-    ta_test_set = make_ta_set(test_set, pos, max_size = 200)
-    return train_set, test_set, ta_test_set
+    return train_set, test_set
 
-def make_ta_set(test_set, pos, max_size):
-    ta_test_set = {}
-    ta_test_set["positive"] = pos
-    negative_examples = list(test_set.keys())
-    negative_examples.remove("tur_Armenian")
-    negative_examples = [doc for key in test_set.keys() for doc in test_set[key]]
-    ta_test_set["negative"] = random.sample(negative_examples, max_size)
-    negative_len = len(ta_test_set["negative"])
-    positive_len = len(ta_test_set["positive"])
-    print(f"Negative len: {negative_len}")
-    print(f"Positive len: {positive_len}")
-    assert(len(ta_test_set["negative"]) == len(ta_test_set["positive"]))
-
-    return ta_test_set
 
 def get_min_subdocs(lang_dict):
     return min(len(subdocs) for subdocs in lang_dict.values())

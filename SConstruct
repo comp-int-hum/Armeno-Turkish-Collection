@@ -38,7 +38,7 @@ vars.AddVariables(
     ("UNICODE_SCRIPTS", "", "data/Scripts.txt"),
     ("PER_LANGUAGE", "", 10),
     ("DATA_LAKE_FILE", "", None),
-    ("MAX_DOC_LENGTH","", 1000),
+    ("MAX_DOC_LENGTH","", 800),
     ("RANKED", "", 0),
     ("USE_MIN_SUBDOCS", "", 0),
     # ("PRETRAINED", "", "work/ng_model.pk1.gz"),
@@ -68,7 +68,7 @@ env = Environment(
         "GenerateNegativeExamples" : Builder(
             action="python scripts/generate_negative_examples.py --hathitrust_index ${HATHITRUST_INDEX} --marc_index ${MARC_INDEX} --per_language ${PER_LANGUAGE} --output ${TARGETS[0]} --random_seed ${RANDOM_SEED} --hathitrust_root ${HATHITRUST_ROOT}"
         ),
-	"CleanChunkExamples" : Builder(
+		"CleanChunkExamples" : Builder(
             action="python scripts/clean_chunk_examples.py --input ${SOURCES[0]} --max_doc_length ${MAX_DOC_LENGTH} --output ${TARGETS[0]}"
         ),
         "TrainTestSplit" : Builder(
@@ -84,7 +84,7 @@ env = Environment(
 	    	action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores --ngram ${N}"
 		),
         "TestModel" : Builder(
-            action="python scripts/test_model.py --model ${SOURCES[0]} --input ${SOURCES[1]} --scores ${TARGETS[0]} --ngram ${N}"
+            action="python scripts/test_model.py --model ${SOURCES[0]} --input ${SOURCES[1]} --scores ${TARGETS[0]} --ngram ${N} --gen_results ${TARGETS[1]} --at_results ${TARGETS[2]}"
         ),
         "GenerateFinalCorpus" : Builder(
             action="python scripts/generate_final_corpus.py --to_annotate ${SOURCES[0]} --score_files ${SOURCES[1:]} --report ${TARGETS[0]} --corpus ${TARGETS[1]}"
@@ -152,8 +152,11 @@ model = env.TrainNGModel(
 )
 
 scores = env.TestModel(
-    "work/scores.json",
-    [model, test]
+    ["work/results/${CHUNK_SIZE}/${N}/scores.json", 
+     "work/results/${CHUNK_SIZE}/${N}/gen_results", 
+     "work/results/${CHUNK_SIZE}/${N}/at_results"],
+    [model, test],
+    CHUNK_SIZE = 800
 )
 
 # model, scores = env.TrainNBModel(
