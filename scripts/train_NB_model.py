@@ -17,8 +17,8 @@ if __name__ == "__main__":
     parser.add_argument("--scores", dest="scores", help="Output file for scores") 
     parser.add_argument("--input", dest="input", help="Input file")
     parser.add_argument("--vectorizer", dest="vectorizer", help="Output file for vectorizer")
-	parser.add_argument("--ngram_lower", dest="ng_lower", type = int, help="Min ngram to use")
-	parser.add_argument("--ngram_upper", dest="ng_upper", type = int, help="Max ngram to use")
+    parser.add_argument("--ngram_lower", dest="ng_lower", type = int, help="Min ngram to use")
+    parser.add_argument("--ngram_upper", dest="ng_upper", type = int, help="Max ngram to use")
 #   parser.add_argument("--output", dest="output", help="Output file")
     args, rest = parser.parse_known_args()
 
@@ -63,7 +63,7 @@ from sklearn.metrics import accuracy_score,f1_score
 
 experiment_name = f"Ngrams from {str(args.ng_lower)} to {str(args.ng_upper)}"
 metrics  = {
-	"experiment_name" : 
+    "experiment_name" : 
     "ac":  accuracy_score(y_test, y_pred),
 #   cm: confusion_matrix(y_test, y_pred)                                                                                           
     "fscore" : f1_score(y_test, y_pred, average='macro')
