@@ -70,10 +70,10 @@ metrics  = {
     }
 
 metrics = json.dumps(metrics)
-with gzip.open(f"model-nb-n{str(args.ng_lower)}-n{str(args.ng_upper)}.pk1.gz", "wb") as ofd:
+with gzip.open(args.model, "wb") as ofd:
     ofd.write(pickle.dumps(model))
     
-with gzip.open(f"vectorizer-nb-n{str(args.ng_lower)}-n{str(args.ng_upper)}.pickle.gz", "wb") as ofd:
+with gzip.open(args.vectorizer, "wb") as ofd:
     ofd.write(pickle.dumps(cv))
 
 #pickle.dump(cv, open("vectorizer.pickle", "wb"))

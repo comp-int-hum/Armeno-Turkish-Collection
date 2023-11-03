@@ -164,7 +164,7 @@ if chunked_combined:
 	for lower in range(4):
 		for upper in range(lower, 4):
 			model, scores = env.TrainNBModel(
-						["work/nb_model.pk1.gz", "work/nb_scores.json"],
+						[f"work/nb_model_n{str(lower)}-n{str(upper)}.pk1.gz", f"work/nb_scores_n{str(lower)}-n{str(upper)}.json"],
 						[chunked_combined], NG_LOWER = lower, NG_UPPER = upper)
 
 # ngram_model, ngram_scores = env.TrainNGModel(
