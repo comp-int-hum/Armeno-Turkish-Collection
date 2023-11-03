@@ -59,10 +59,14 @@ y_pred = model.predict(x_test)
 # model evaluation
 from sklearn.metrics import accuracy_score,f1_score
 
+at_test = [test for test in y_test if test == "tur_Armenian"]
+at_preds = [pred for i, pred in enumerate(y_pred) if y_test[i] == "tur_Armenian"]
+
 metrics  = {
-    "ac":  accuracy_score(y_test, y_pred),
-#   cm: confusion_matrix(y_test, y_pred)                                                                                           
-    "fscore" : f1_score(y_test, y_pred, average='macro')
+    "overall_ac":  accuracy_score(y_test, y_pred),                                                                                  
+    "overall_fscore" : f1_score(y_test, y_pred, average='macro'),
+    "at_ac" : accuracy_score(at_test, at_preds),
+    "at_fscore": f1_score(at_test, at_preds, average='macro')
     }
 
 metrics = json.dumps(metrics)
