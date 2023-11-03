@@ -44,7 +44,8 @@ vars.AddVariables(
     # ("PRETRAINED", "", "work/ng_model.pk1.gz"),
     ("PRETRAINED", "", "None"),
 	("NG_UPPER", "", 4),
-	("NG_LOWER", "", 2)
+	("NG_LOWER", "", 2),
+	("CHUNKED_COMBINED", "", "./work/chunked_combined.json.gz")
 )
 
 env = Environment(
@@ -94,50 +95,50 @@ env = Environment(
     }
 )
 
-armeno_turkish = env.CollectionToJSON(
-    ["work/True_AT_set.jsonl.gz"],
-    ["data/True_AT.tsv.gz"],
-    LABEL="armeno_turkish"
-)
+# armeno_turkish = env.CollectionToJSON(
+#     ["work/True_AT_set.jsonl.gz"],
+#     ["data/True_AT.tsv.gz"],
+#     LABEL="armeno_turkish"
+# )
 
-negative_examples = env.GenerateNegativeExamples(
-    "work/sampled_negative.jsonl.gz",
-    []
-)
+# negative_examples = env.GenerateNegativeExamples(
+#     "work/sampled_negative.jsonl.gz",
+#     []
+# )
 
-armeno_turkish_with_content = env.ExpandEntries(
-    ["work/labeled_with_content.jsonl.gz"],
-    [armeno_turkish]
-)
+# armeno_turkish_with_content = env.ExpandEntries(
+#     ["work/labeled_with_content.jsonl.gz"],
+#     [armeno_turkish]
+# )
 
-combined = env.MergeEntries(
-    "work/combined.jsonl.gz",
-    [armeno_turkish_with_content, negative_examples]
-)
-combined_cleaned_chunked = env.CleanChunkExamples(
-    ["work/chunked_combined.json.gz"],
-    ["work/combined.jsonl.gz"],
-    []
-)
+# combined = env.MergeEntries(
+#     "work/combined.jsonl.gz",
+#     [armeno_turkish_with_content, negative_examples]
+# )
+# combined_cleaned_chunked = env.CleanChunkExamples(
+#     ["work/chunked_combined.json.gz"],
+#     ["work/combined.jsonl.gz"],
+#     []
+# )
 
-# if the data lake file is specified in config.py, no need to build it
-if env.get("DATA_LAKE_FILE", None):
-    data_lake_with_content = env.File(env["DATA_LAKE_FILE"])
-else:
-    data_lake = env.FilterMarc(
-        ["work/data_lake.jsonl.gz"],
-        [],
-        REGEXES=[]
-    )
-    data_lake_with_content = env.ExpandEntries(
-        ["work/data_lake_with_content.jsonl.gz"],
-        [data_lake]
-    )
+# # if the data lake file is specified in config.py, no need to build it
+# if env.get("DATA_LAKE_FILE", None):
+#     data_lake_with_content = env.File(env["DATA_LAKE_FILE"])
+# else:
+#     data_lake = env.FilterMarc(
+#         ["work/data_lake.jsonl.gz"],
+#         [],
+#         REGEXES=[]
+#     )
+#     data_lake_with_content = env.ExpandEntries(
+#         ["work/data_lake_with_content.jsonl.gz"],
+#         [data_lake]
+#     )
     
-train, test, ta_test = env.TrainTestSplit(
-    ["work/train_data.json", "work/test_data.json", "work/ta_test.json"],
-    [combined_cleaned_chunked]
-)
+# train, test, ta_test = env.TrainTestSplit(
+#     ["work/train_data.json", "work/test_data.json", "work/ta_test.json"],
+#     [combined_cleaned_chunked]
+# )
 
 # model, scores = env.TrainNBModel(
 #     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
@@ -158,11 +159,13 @@ train, test, ta_test = env.TrainTestSplit(
 #     ["work/ng_model.pk1.gz", "work/ng_scores.json"],
 #     [train, test, ta_test]
 # )
-for lower in range(4):
-	for upper in range(lower, 4):
-		model, scores = env.TrainNBModel(
-					["work/nb_model.pk1.gz", "work/nb_scores.json"],
-					["work/chunked_combined.json.gz"], NG_LOWER = lower, NG_UPPER = upper)
+chunked_combined = env.get("CHUNKED_COMBINED", None)
+if chunked_combined:
+	for lower in range(4):
+		for upper in range(lower, 4):
+			model, scores = env.TrainNBModel(
+						["work/nb_model.pk1.gz", "work/nb_scores.json"],
+						[chunked_combined], NG_LOWER = lower, NG_UPPER = upper)
 
 # ngram_model, ngram_scores = env.TrainNGModel(
 #     ["work/ng_model.pk1.gz", "work/NG_scores.json"],

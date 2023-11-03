@@ -61,7 +61,9 @@ y_pred = model.predict(x_test)
 # model evaluation
 from sklearn.metrics import accuracy_score,f1_score
 
+experiment_name = f"Ngrams from {str(args.ng_lower)} to {str(args.ng_upper)}"
 metrics  = {
+	"experiment_name" : 
     "ac":  accuracy_score(y_test, y_pred),
 #   cm: confusion_matrix(y_test, y_pred)                                                                                           
     "fscore" : f1_score(y_test, y_pred, average='macro')
