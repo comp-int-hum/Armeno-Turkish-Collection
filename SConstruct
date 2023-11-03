@@ -43,8 +43,8 @@ vars.AddVariables(
     ("USE_MIN_SUBDOCS", "", 0),
     # ("PRETRAINED", "", "work/ng_model.pk1.gz"),
     ("PRETRAINED", "", "None"),
-	("NG_UPPER", "", 4),
-	("NG_LOWER", "", 2),
+	("NG_UPPER", "", 5),
+	("NG_LOWER", "", 1),
 	("CHUNKED_COMBINED", "", "./work/chunked_combined.json.gz")
 )
 
@@ -159,10 +159,11 @@ env = Environment(
 #     ["work/ng_model.pk1.gz", "work/ng_scores.json"],
 #     [train, test, ta_test]
 # )
+
 chunked_combined = env.get("CHUNKED_COMBINED", None)
 if chunked_combined:
-	for lower in range(4):
-		for upper in range(lower, 4):
+	for lower in range(1, 5):
+		for upper in range(lower, 5):
 			model, scores = env.TrainNBModel(
 						[f"work/nb_model_n{str(lower)}-n{str(upper)}.pk1.gz", f"work/nb_scores_n{str(lower)}-n{str(upper)}.json"],
 						[chunked_combined], NG_LOWER = lower, NG_UPPER = upper)
