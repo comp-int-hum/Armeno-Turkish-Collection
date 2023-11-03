@@ -38,7 +38,7 @@ if __name__ == "__main__":
     htids = []
     dists = []    
     guesses = []
-    texts = []
+    contents = []
     # one set of tuples for tur_Armenian
     # one set of tuples for everything
     # (htid, gold, guess, dists, "text")
@@ -54,12 +54,12 @@ if __name__ == "__main__":
                 golds.append(lang)
                 guess = sorted(dist.items(), key=lambda x : x[1])[0][0]
                 guesses.append(guess)
-                texts.append(text)
+                contents.append(text)
                 total += 1
                 if lang == guess:
                     correct += 1
             logger.info("Accuracy for %s: %.3f", lang, correct / total)
-    zipped = zip(htids, golds, guesses, dists, texts)
+    zipped = zip(htids, golds, guesses, dists, contents)
     test_results = [TestResult(*item) for item in zipped]
 
     at = filter(lambda x: x.gold == "tur_Armenian", test_results)
