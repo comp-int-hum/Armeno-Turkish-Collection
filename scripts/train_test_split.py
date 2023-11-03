@@ -3,7 +3,7 @@ import gzip
 import random
 import json
 
-def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 500):
+def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 1):
     random.seed(random_seed)
     print(f"Use min: {use_min}")
     train_set = {}
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument("--random_seed", dest="random_seed", type=int, default=None)
     parser.add_argument("--use_min", dest="min", type=int, default=0)
     parser.add_argument("--train_ratio", dest="ratio", type = float, help = "fraction of data for training")
-    parser.add_argument("--outputs", dest="outputs", nargs = 3, help= "names for train and test files")
+    parser.add_argument("--outputs", dest="outputs", nargs = 2, help= "names for train and test files")
     args, rest = parser.parse_known_args()
     
     lang_dict = {}
@@ -80,12 +80,10 @@ if __name__ == "__main__":
     assert(args.ratio <= 1.0)
     assert(args.ratio >= 0.0)
     
-    train, test, ta = train_test_split(lang_dict, args.ratio, args.random_seed, args.min != 0)
+    train, test = train_test_split(lang_dict, args.ratio, args.random_seed, args.min != 0)
     with gzip.open(args.outputs[0], "wt") as train_output:
         train_output.write(json.dumps(train))
     
     with gzip.open(args.outputs[1], "wt") as test_output:
         test_output.write(json.dumps(test))
 
-    with gzip.open(args.outputs[2], "wt") as ta_output:
-        ta_output.write(json.dumps(ta))

@@ -131,8 +131,8 @@ else:
         data_lake
     )
     
-train, test, ta_test = env.TrainTestSplit(
-   ["work/train_data.json.gz", "work/test_data.json.gz", "work/ta_test.json.gz"],
+train, test = env.TrainTestSplit(
+   ["work/train_data.json.gz", "work/test_data.json.gz"],
    combined_cleaned_chunked
 )
 
