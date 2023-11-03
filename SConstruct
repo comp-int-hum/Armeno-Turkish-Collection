@@ -78,11 +78,11 @@ env = Environment(
             action="python scripts/apply_fasttext.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
         ),
         "TrainNBModel" : Builder(
-	    	action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
-		),
+	    	    action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
+		    ),
         "TrainNGModel" : Builder(
-	    	action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores --ngram ${N}"
-		),
+	    	    action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores --ngram ${N}"
+		    ),
         "TestModel" : Builder(
             action="python scripts/test_model.py --model ${SOURCES[0]} --input ${SOURCES[1]} --scores ${TARGETS[0]} --ngram ${N} --gen_results ${TARGETS[1]} --at_results ${TARGETS[2]}"
         ),
