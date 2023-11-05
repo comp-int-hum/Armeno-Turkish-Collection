@@ -3,12 +3,11 @@ import gzip
 import random
 import json
 
-def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 1):
+def train_test_split(lang_dict, train_ratio, random_seed, use_min, train_max_size = 500, test_max_size=40):
     random.seed(random_seed)
     print(f"Use min: {use_min}")
     train_set = {}
     test_set = {}
-    train_max_size = max_size
     # test_max_size = int(max_size * (1 - train_ratio))
     min_subdoc_num = get_min_subdocs(lang_dict)
     for k, v in lang_dict.items():
@@ -29,8 +28,9 @@ def train_test_split(lang_dict, train_ratio, random_seed, use_min, max_size = 1)
         random.shuffle(train_set[k])
         random.shuffle(test_set[k])
         train_set[k] = train_set[k][:train_max_size]
-    print("Overall train size", len(train_set))
-    print("Overall test size", len(test_set))
+        test_set[k] = test_set[k][:test_max_size]
+        print(f"Individual train size: {len(train_set[k])}")
+        print(f"Individual test size: {len(test_set[k])}")
     return train_set, test_set
 
 
@@ -86,4 +86,3 @@ if __name__ == "__main__":
     
     with gzip.open(args.outputs[1], "wt") as test_output:
         test_output.write(json.dumps(test))
-
