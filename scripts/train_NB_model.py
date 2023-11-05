@@ -50,132 +50,47 @@ from sklearn.model_selection import train_test_split
 x_train, x_test, y_train_tuples, y_test_tuples = train_test_split(X, y, random_state=1, test_size = 0.20)
 
 #model creation and prediction
-y_train =[label for label, title in y_train_tuples]
-y_test = [label for label, title in y_test_tuples]
+y_train =[label for label, htid in y_train_tuples]
+y_test = [label for label, htid in y_test_tuples]
 title_test = [title for lable, title in y_test_tuples]
 
 model = MultinomialNB()
 model.fit(x_train, y_train)
 # prediction 
 y_pred = model.predict(x_test)
+
+y_test_labels = le.inverse_transform(y_test)
+y_pred_labels = le.inverse_transform(y_pred)
+
 # model evaluation
 from sklearn.metrics import accuracy_score,f1_score
 
-experiment_name = f"Ngrams from {str(args.ng_lower)} to {str(args.ng_upper)}"
+# convert to binary tur_Armenian classification task
+at_test = [test if test == "tur_Armenian" else "non_tur_Armenian" for test in y_test_labels]
+at_preds = [pred if pred == "tur_Armenian" else "non_tur_Armenian" for pred in y_pred_labels]
+print(f"at_test: {at_test}")
+print(f"at_pred: {at_preds}")
+
+at_errors = [(at_test[i], at_preds[i]) for i in range(len(at_test)) if at_test[i] != at_preds[i]]
+
 metrics  = {
-    "experiment_name" : experiment_name,
-    "ac":  accuracy_score(y_test, y_pred),
-#   cm: confusion_matrix(y_test, y_pred)                                                                                           
-    "fscore" : f1_score(y_test, y_pred, average='macro')
+    "overall_ac":  accuracy_score(y_test, y_pred),                                                                                  
+    "overall_fscore" : f1_score(y_test, y_pred, average='macro'),
+    "at_recall" : accuracy_score(at_test, at_preds),
+    "at_fscore": f1_score(at_test, at_preds, average='binary', pos_label="tur_Armenian")
     }
 
+print(at_errors)
+
 metrics = json.dumps(metrics)
-with gzip.open(args.model, "wb") as ofd:
+with gzip.open("model.pk1.gz", "wb") as ofd:
     ofd.write(pickle.dumps(model))
     
-# with gzip.open(args.vectorizer, "wb") as ofd:
-#     ofd.write(pickle.dumps(cv))
+with gzip.open("vectorizer.pickle.gz", "wb") as ofd:
+    ofd.write(pickle.dumps(cv))
 
 #pickle.dump(cv, open("vectorizer.pickle", "wb"))
 #saving the scores
 
-with open(args.scores, "at") as ofd:
-    ofd.write(f"\n{metrics}")
-   
-   
-   
-   
-   
-
-   
-        
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-"""
-def split_text(text, max_length):
-    while len(text) > max_length:
-        yield text[:max_length]
-        text = text[max_length:]
-    if len(text) > 0:
-        yield text
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--data", dest="data", help="Data input file")
-    parser.add_argument("--train", dest="train", help="Train input file (list of line-numbers in the data file)")
-    parser.add_argument("--dev", dest="dev", help="Dev input file (list of line-numbers in the data file)")
-    parser.add_argument("--model", dest="model", help="Output file for pickled model")
-    parser.add_argument("--scores", dest="scores", help="Output file for dev scores")
-    parser.add_argument("--n", dest="n", default=3, type=int, help="Value of 'n', as in 'n-gram'")
-    parser.add_argument("--max_length", dest="max_length", default=0, type=int, help="Max length of texts to evaluate on")
-    args, rest = parser.parse_known_args()
-
-    # Get lists of train/dev item-numbers
-    train = []
-    dev = []
-
-    with gzip.open(args.train, "rt") as ifd:
-        for line in ifd:
-            train.append(json.loads(line))
-
-    with gzip.open(args.dev, "rt") as ifd:
-        for line in ifd:
-            dev.append(json.loads(line))            
-
-    models = {}
-
-    # Train model and get dev instances
-    devs = []
-    with gzip.open(args.data, "rt") as ifd:
-        for i, line in enumerate(ifd):
-           j = json.loads(line)
-           if i in train:
-               label = j["label"]
-               # Initialize model for this label if one doesn't exist yet
-               # models[label] = models.get(label, None)
-               
-               # Add counts from j["contents"] to the model[label]
-               # ...
-               pass
-           elif i in dev:
-               devs.append(j)
-    
-    # Apply models to (chunks of) dev
-    guesses = []
-    golds = []
-    for j in devs:
-        gold = j["label"]
-        # Apply models to j["content"], whichever is more likely is the "guess"
-        #
-        for chunk in (j["content"] if args.max_length == 0 else split_text(j["content"], args.max_length)):
-            # guesses.append(guess)
-            golds.append(gold)
-            pass
-
-    # compute scores
-    scores = {
-        # "fscore" : sklearn.metrics.f_measure(...)
-    }
-
-    # save model
-    with gzip.open(args.model, "wb") as ofd:
-        ofd.write(pickle.dumps(models))
-
-    # save scores
-    with gzip.open(args.scores, "wb") as ofd:
-        ofd.write(pickle.dumps(scores))
-"""
+with open(args.scores, "wt") as ofd:
+    ofd.write(metrics)
