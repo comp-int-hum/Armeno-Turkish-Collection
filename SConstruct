@@ -38,7 +38,7 @@ vars.AddVariables(
     ("UNICODE_SCRIPTS", "", "data/Scripts.txt"),
     ("PER_LANGUAGE", "", 10),
     ("DATA_LAKE_FILE", "", None),
-    ("MAX_DOC_LENGTH","", 1000),
+    ("MAX_DOC_LENGTH","", 800),
     ("RANKED", "", 0),
     ("USE_MIN_SUBDOCS", "", 0),
     # ("PRETRAINED", "", "work/ng_model.pk1.gz"),
@@ -162,8 +162,8 @@ env = Environment(
 
 chunked_combined = env.get("CHUNKED_COMBINED", None)
 if chunked_combined:
-	for lower in range(1, 2):
-		for upper in range(3, 4):
+	for lower in range(1, 4):
+		for upper in range(lower, 4):
 			model, scores = env.TrainNBModel(
 						[f"work/nb_model_n{str(lower)}-n{str(upper)}.pk1.gz", f"work/nb_scores_n{str(lower)}-n{str(upper)}.json"],
 						[chunked_combined], NG_LOWER = lower, NG_UPPER = upper)
