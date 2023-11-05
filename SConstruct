@@ -162,8 +162,8 @@ env = Environment(
 
 chunked_combined = env.get("CHUNKED_COMBINED", None)
 if chunked_combined:
-	for lower in range(1, 5):
-		for upper in range(lower, 5):
+	for lower in range(1, 2):
+		for upper in range(3, 4):
 			model, scores = env.TrainNBModel(
 						[f"work/nb_model_n{str(lower)}-n{str(upper)}.pk1.gz", f"work/nb_scores_n{str(lower)}-n{str(upper)}.json"],
 						[chunked_combined], NG_LOWER = lower, NG_UPPER = upper)
