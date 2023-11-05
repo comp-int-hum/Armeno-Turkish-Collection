@@ -43,6 +43,8 @@ vars.AddVariables(
     ("USE_MIN_SUBDOCS", "", 0),
     # ("PRETRAINED", "", "work/ng_model.pk1.gz"),
     ("PRETRAINED", "", "None"),
+    ("CHUNK_SIZES", "", [400, 800, 1200]),
+    ("NGRAM_SIZES", "", [2, 3])
 )
 
 env = Environment(
@@ -68,8 +70,8 @@ env = Environment(
         "GenerateNegativeExamples" : Builder(
             action="python scripts/generate_negative_examples.py --hathitrust_index ${HATHITRUST_INDEX} --marc_index ${MARC_INDEX} --per_language ${PER_LANGUAGE} --output ${TARGETS[0]} --random_seed ${RANDOM_SEED} --hathitrust_root ${HATHITRUST_ROOT}"
         ),
-		"CleanChunkExamples" : Builder(
-            action="python scripts/clean_chunk_examples.py --input ${SOURCES[0]} --max_doc_length ${MAX_DOC_LENGTH} --output ${TARGETS[0]}"
+        "CleanChunkExamples" : Builder(
+            action="python scripts/clean_chunk_examples.py --input ${SOURCES[0]} --max_doc_length ${CHUNK_SIZE} --output ${TARGETS[0]}"
         ),
         "TrainTestSplit" : Builder(
             action="python scripts/train_test_split.py --input ${SOURCES[0]} --outputs ${TARGETS} --use_min ${USE_MIN_SUBDOCS} --train_ratio ${TRAIN_PROPORTION} --random_seed ${RANDOM_SEED}"
@@ -78,13 +80,13 @@ env = Environment(
             action="python scripts/apply_fasttext.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
         ),
         "TrainNBModel" : Builder(
-	    	action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
-		),
+            action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
+        ),
         "TrainNGModel" : Builder(
-	    	action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores --ngram ${N}"
-		),
+            action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores --ngram ${NGRAM_SIZE}"
+        ),
         "TestModel" : Builder(
-            action="python scripts/test_model.py --model ${SOURCES[0]} --input ${SOURCES[1]} --scores ${TARGETS[0]} --ngram ${N} --gen_results ${TARGETS[1]} --at_results ${TARGETS[2]}"
+            action="python scripts/test_model.py --model ${SOURCES[0]} --input ${SOURCES[1]} --scores ${TARGETS[0]} --ngram ${NGRAM_SIZE} --gen_results ${TARGETS[1]} --at_results ${TARGETS[2]}"
         ),
         "GenerateFinalCorpus" : Builder(
             action="python scripts/generate_final_corpus.py --to_annotate ${SOURCES[0]} --score_files ${SOURCES[1:]} --report ${TARGETS[0]} --corpus ${TARGETS[1]}"
@@ -112,29 +114,53 @@ combined = env.MergeEntries(
     "work/combined.jsonl.gz",
     [armeno_turkish_with_content, negative_examples]
 )
-combined_cleaned_chunked = env.CleanChunkExamples(
-    "work/chunked_combined.json.gz",
-    "work/combined.jsonl.gz",
-)
+
+for chunk_size in env["CHUNK_SIZES"]:
+    combined_cleaned_chunked = env.CleanChunkExamples(
+        "work/chunked_combined-${CHUNK_SIZE}.json.gz",
+        "work/combined.jsonl.gz",
+        CHUNK_SIZE = chunk_size
+    )
+
+    train, test = env.TrainTestSplit(
+        ["work/train_data-${CHUNK_SIZE}.json.gz", "work/test_data-${CHUNK_SIZE}.json.gz"],
+        combined_cleaned_chunked,
+        CHUNK_SIZE = chunk_size
+    )
+
+    for ngram_size in env["NGRAM_SIZES"]:
+        model = env.TrainNGModel(
+            "work/ng_model/${CHUNK_SIZE}/${NGRAM_SIZE}/model.pkl.gz",
+            train,
+            NGRAM_SIZE = ngram_size,
+            CHUNK_SIZE = chunk_size
+        )
+
+        scores, gen, at = env.TestModel(
+            ["work/results/${CHUNK_SIZE}/${NGRAM_SIZE}/scores.json", 
+            "work/results/${CHUNK_SIZE}/${NGRAM_SIZE}/gen_results", 
+            "work/results/${CHUNK_SIZE}/${NGRAM_SIZE}/at_results"],
+            [model, test],
+            NGRAM_SIZE = ngram_size,
+            CHUNK_SIZE = chunk_size
+        )
+
+
 
 # if the data lake file is specified in config.py, no need to build it
-if env.get("DATA_LAKE_FILE", None):
-    data_lake_with_content = env.File(env["DATA_LAKE_FILE"])
-else:
-    data_lake = env.FilterMarc(
-        "work/data_lake.jsonl.gz",
-        [],
-        REGEXES=[]
-    )
-    data_lake_with_content = env.ExpandEntries(
-        "work/data_lake_with_content.jsonl.gz",
-        data_lake
-    )
+# if env.get("DATA_LAKE_FILE", None):
+#     data_lake_with_content = env.File(env["DATA_LAKE_FILE"])
+# else:
+#     data_lake = env.FilterMarc(
+#         "work/data_lake.jsonl.gz",
+#         [],
+#         REGEXES=[]
+#     )
+#     data_lake_with_content = env.ExpandEntries(
+#         "work/data_lake_with_content.jsonl.gz",
+#         data_lake
+#     )
     
-train, test = env.TrainTestSplit(
-   ["work/train_data.json.gz", "work/test_data.json.gz"],
-   combined_cleaned_chunked
-)
 
 # model, scores = env.TrainNBModel(
 #     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
@@ -145,19 +171,6 @@ train, test = env.TrainTestSplit(
 #     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
 #     [train, test]
 # )
-
-model = env.TrainNGModel(
-    "work/ng_model.pkl.gz",
-    train
-)
-
-scores = env.TestModel(
-    ["work/results/${CHUNK_SIZE}/${N}/scores.json", 
-     "work/results/${CHUNK_SIZE}/${N}/gen_results", 
-     "work/results/${CHUNK_SIZE}/${N}/at_results"],
-    [model, test],
-    CHUNK_SIZE = 800
-)
 
 # model, scores = env.TrainNBModel(
 #     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
