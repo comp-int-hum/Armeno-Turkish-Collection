@@ -100,35 +100,6 @@ env = Environment(
 
 env.Decider("timestamp-newer")
 
-armeno_turkish = env.CollectionToJSON(
-    "work/True_AT_set.jsonl.gz",
-    "data/True_AT.tsv.gz",
-    LABEL="armeno_turkish"
-)
-
-negative_examples = env.GenerateNegativeExamples(
-    "work/sampled_negative.jsonl.gz",
-    [],
-    GRID_MEMORY="64GB"
-)
-
-armeno_turkish_with_content = env.ExpandEntries(
-    "work/labeled_with_content.jsonl.gz",
-    armeno_turkish,
-    GRID_MEMORY="4GB",
-    SPLIT_BY_SCRIPT=True
-)
-
-combined = env.MergeEntries(
-    "work/combined.jsonl.gz",
-    [armeno_turkish_with_content, negative_examples],
-    GRID_MEMORY="4GB"
-)
-combined_cleaned_chunked = env.CleanChunkExamples(
-    "work/chunked_combined.json.gz",
-    "work/combined.jsonl.gz",
-    GRID_MEMORY="4GB"
-)
 
 # if the data lake file is specified in config.py, no need to build it
 if env.get("DATA_LAKE_FILE", None):
@@ -149,6 +120,36 @@ else:
 if env.get("PRECOMPUTED_LID", None):
     labeled = env.File(env["PRECOMPUTED_LID"])
 else:
+    armeno_turkish = env.CollectionToJSON(
+        "work/True_AT_set.jsonl.gz",
+        "data/True_AT.tsv.gz",
+        LABEL="armeno_turkish"
+    )
+
+    negative_examples = env.GenerateNegativeExamples(
+        "work/sampled_negative.jsonl.gz",
+        [],
+        GRID_MEMORY="64GB"
+    )
+
+    armeno_turkish_with_content = env.ExpandEntries(
+        "work/labeled_with_content.jsonl.gz",
+        armeno_turkish,
+        GRID_MEMORY="4GB",
+        SPLIT_BY_SCRIPT=True
+    )
+
+    combined = env.MergeEntries(
+        "work/combined.jsonl.gz",
+        [armeno_turkish_with_content, negative_examples],
+        GRID_MEMORY="4GB"
+    )
+    combined_cleaned_chunked = env.CleanChunkExamples(
+        "work/chunked_combined.json.gz",
+        "work/combined.jsonl.gz",
+        GRID_MEMORY="4GB"
+    )
+    
     train, dev, test = env.RandomSplit(
         ["work/train_data.jsonl.gz", "work/dev_data.jsonl.gz", "work/test_data.jsonl.gz"],
         combined_cleaned_chunked,
