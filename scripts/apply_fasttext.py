@@ -1,32 +1,38 @@
 import json
 import gzip
+import logging
 import argparse
-import math
 import fasttext
-from huggingface_hub import hf_hub_download
 
+logger = logging.getLogger("apply_fasttext")
 
-#labels, probs = model.predict(chunks, k=3)
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", dest="input", help="Input file")
-    parser.add_argument("-o", "--output", dest="output", help="Output file")
+    parser.add_argument("--input", dest="input", help="Input file")
+    parser.add_argument("--model", dest="model")
     parser.add_argument("--window_size", dest="window_size", type=int, default=400)
+    parser.add_argument("--output", dest="output", help="Output file")
     args = parser.parse_args()
 
-    model_path = hf_hub_download(repo_id="arc-r/fasttext-language-identification", filename="lid.176.bin")
-    model = fasttext.load_model(model_path)
-
-    def process(txt):
-        spans = []
-        for w in range(math.ceil(len(txt) / args.window_size)):
-            spans.append(txt[args.window_size * w : args.window_size * (w + 1)].replace("\n", " "))
-        labels, probs = model.predict(spans, k=3)
-        return [(s, list(zip(ls, [float(p) for p in ps]))) for s, ls, ps in zip(spans, labels, probs)]
+    logging.basicConfig(level=logging.INFO)
     
+    model = fasttext.load_model(args.model)
+
+    label_count = len(model.get_labels())
     with gzip.open(args.input, "rt") as ifd, gzip.open(args.output, "wt") as ofd:
         for line in ifd:
             j = json.loads(line)
-            j["content"] = {k : [process(x) for x in v] for k, v in j["content"].items()}
+            logger.info("Processing '%s'", j["htid"])
+            toks = j["content"].split()
+            del j["content"]
+            j["lid"] = []
+            while len(toks) > 0:
+                chunk = " ".join(toks[:args.window_size])
+                labels, probs = model.predict(chunk, k=label_count)
+                lang_probs = {}
+                for k, v in zip(labels, probs):
+                    lang_probs[k[9:]] = v
+                j["lid"].append(lang_probs)
+                toks = toks[args.window_size:]                
             ofd.write(json.dumps(j) + "\n")

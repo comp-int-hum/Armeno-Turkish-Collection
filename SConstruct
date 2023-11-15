@@ -43,6 +43,9 @@ vars.AddVariables(
     ("USE_MIN_SUBDOCS", "", 0),
     # ("PRETRAINED", "", "work/ng_model.pk1.gz"),
     ("PRETRAINED", "", "None"),
+    ("SPLIT_BY_SCRIPT", "", False),
+    ("APPLY_WINDOW_SIZE", "", 200),
+    ("PRECOMPUTED_LID", "", None)
 )
 
 env = Environment(
@@ -60,7 +63,7 @@ env = Environment(
             action="python scripts/merge_entries.py --inputs ${SOURCES} --output ${TARGETS[0]}"
         ),
         "ExpandEntries" : Builder(
-            action="python scripts/expand_entries.py --input ${SOURCES[0]} --output ${TARGETS[0]} --hathitrust_root ${HATHITRUST_ROOT}"
+            action="python scripts/expand_entries.py --input ${SOURCES[0]} --output ${TARGETS[0]} --hathitrust_root ${HATHITRUST_ROOT} ${'--split_by_script' if SPLIT_BY_SCRIPT else ''}"
         ),
         "RandomSplit" : Builder(
             action="python scripts/random_split.py --input ${SOURCES[0]} --outputs ${TARGETS} --proportions ${TRAIN_PROPORTION} ${DEV_PROPORTION} ${TEST_PROPORTION} --random_seed ${RANDOM_SEED}"
@@ -68,15 +71,18 @@ env = Environment(
         "GenerateNegativeExamples" : Builder(
             action="python scripts/generate_negative_examples.py --hathitrust_index ${HATHITRUST_INDEX} --marc_index ${MARC_INDEX} --per_language ${PER_LANGUAGE} --output ${TARGETS[0]} --random_seed ${RANDOM_SEED} --hathitrust_root ${HATHITRUST_ROOT}"
         ),
-		"CleanChunkExamples" : Builder(
+	"CleanChunkExamples" : Builder(
             action="python scripts/clean_chunk_examples.py --input ${SOURCES[0]} --max_doc_length ${MAX_DOC_LENGTH} --output ${TARGETS[0]}"
         ),
-        "TrainTestSplit" : Builder(
-            action="python scripts/train_test_split.py --input ${SOURCES[0]} --outputs ${TARGETS} --use_min ${USE_MIN_SUBDOCS} --train_ratio ${TRAIN_PROPORTION} --random_seed ${RANDOM_SEED}"
+        #"TrainTestSplit" : Builder(
+        #    action="python scripts/train_test_split.py --input ${SOURCES[0]} --outputs ${TARGETS} --use_min ${USE_MIN_SUBDOCS} --train_ratio ${TRAIN_PROPORTION} --random_seed ${RANDOM_SEED}"
+        #),
+        "TrainFasttext" : Builder(
+            action="python scripts/train_fasttext.py --train ${SOURCES[0]} --dev ${SOURCES[1]} --model ${TARGETS[0]}"
         ),
         "ApplyFasttext" : Builder(
-            action="python scripts/apply_fasttext.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
-        ),
+            action="python scripts/apply_fasttext.py --input ${SOURCES[1]} --model ${SOURCES[0]} ${'--window_size ' + str(APPLY_WINDOW_SIZE) if APPLY_WINDOW_SIZE else ''} --output ${TARGETS[0]}"
+        ),        
         "TrainNBModel" : Builder(
 	    	    action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
 		    ),
@@ -92,6 +98,8 @@ env = Environment(
     }
 )
 
+env.Decider("timestamp-newer")
+
 armeno_turkish = env.CollectionToJSON(
     "work/True_AT_set.jsonl.gz",
     "data/True_AT.tsv.gz",
@@ -100,21 +108,26 @@ armeno_turkish = env.CollectionToJSON(
 
 negative_examples = env.GenerateNegativeExamples(
     "work/sampled_negative.jsonl.gz",
-    []
+    [],
+    GRID_MEMORY="64GB"
 )
 
 armeno_turkish_with_content = env.ExpandEntries(
     "work/labeled_with_content.jsonl.gz",
-    armeno_turkish
+    armeno_turkish,
+    GRID_MEMORY="4GB",
+    SPLIT_BY_SCRIPT=True
 )
 
 combined = env.MergeEntries(
     "work/combined.jsonl.gz",
-    [armeno_turkish_with_content, negative_examples]
+    [armeno_turkish_with_content, negative_examples],
+    GRID_MEMORY="4GB"
 )
 combined_cleaned_chunked = env.CleanChunkExamples(
     "work/chunked_combined.json.gz",
     "work/combined.jsonl.gz",
+    GRID_MEMORY="4GB"
 )
 
 # if the data lake file is specified in config.py, no need to build it
@@ -124,17 +137,35 @@ else:
     data_lake = env.FilterMarc(
         "work/data_lake.jsonl.gz",
         [],
-        REGEXES=[]
+        REGEXES=[],
+        GRID_MEMORY="4G"
     )
     data_lake_with_content = env.ExpandEntries(
         "work/data_lake_with_content.jsonl.gz",
-        data_lake
+        data_lake,
+        GRID_MEMORY="64G"
     )
-    
-train, test = env.TrainTestSplit(
-   ["work/train_data.json.gz", "work/test_data.json.gz"],
-   combined_cleaned_chunked
-)
+
+if env.get("PRECOMPUTED_LID", None):
+    labeled = env.File(env["PRECOMPUTED_LID"])
+else:
+    train, dev, test = env.RandomSplit(
+        ["work/train_data.jsonl.gz", "work/dev_data.jsonl.gz", "work/test_data.jsonl.gz"],
+        combined_cleaned_chunked,
+        GRID_MEMORY="4G"
+    )
+
+    model = env.TrainFasttext(
+        "work/fasttext_model.bin",
+        [train, dev],
+        GRID_MEMORY="8G"
+    )
+
+    labeled = env.ApplyFasttext(
+        "work/labeled_fasttext.jsonl.gz",
+        [model, data_lake_with_content],
+        GRID_MEMORY="8G"
+    )
 
 # model, scores = env.TrainNBModel(
 #     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
@@ -146,18 +177,20 @@ train, test = env.TrainTestSplit(
 #     [train, test]
 # )
 
-model = env.TrainNGModel(
-    "work/ng_model.pkl.gz",
-    train
-)
+#model = env.TrainNGModel(
+#    "work/ng_model.pkl.gz",
+#    train,
+#    GRID_MEMORY="4G"
+#)
 
-scores = env.TestModel(
-    ["work/results/${CHUNK_SIZE}/${N}/scores.json", 
-     "work/results/${CHUNK_SIZE}/${N}/gen_results", 
-     "work/results/${CHUNK_SIZE}/${N}/at_results"],
-    [model, test],
-    CHUNK_SIZE = 800
-)
+#scores = env.TestModel(
+#    ["work/results/${CHUNK_SIZE}/${N}/scores.json", 
+#     "work/results/${CHUNK_SIZE}/${N}/gen_results", 
+#     "work/results/${CHUNK_SIZE}/${N}/at_results"],
+#    [model, test],
+#    CHUNK_SIZE = 800,
+#    GRID_MEMORY="4G"
+#)
 
 # model, scores = env.TrainNBModel(
 #     ["work/nb_model.pk1.gz", "work/nb_scores.json"],

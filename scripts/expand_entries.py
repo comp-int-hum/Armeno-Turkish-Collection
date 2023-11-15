@@ -11,11 +11,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", dest="input", help="Input file")
     parser.add_argument("--output", dest="output", help="Output file")
+    parser.add_argument("--split_by_script", dest="split_by_script", default=False, action="store_true")
     parser.add_argument("--hathitrust_root", dest="hathitrust_root", help="Path to HathiTrust")
     parser.add_argument("--unicode_scripts", dest="unicode_scripts", default="data/Scripts.txt", help="Unicode Script.txt file")
     args, rest = parser.parse_known_args()
-
-
+    
+    
     # create a dictionary from unicode integer to script
     script_lookup = {}
     with open(args.unicode_scripts, "rt") as ifd:
@@ -58,22 +59,25 @@ if __name__ == "__main__":
                                     txt = izf.read(page).decode("utf-8")
                                     pages.append(txt)
             txt = "\n".join(pages)
-            prev_script = None
-            cur = ""
-            scripts = {}
-            for c in txt:
-                s = script_lookup.get(ord(c), "Common")
-                if s != "Common":
-                    if prev_script in [None, s]:
-                        cur += c
+            if args.split_by_script:
+                prev_script = None
+                cur = ""
+                scripts = {}
+                for c in txt:
+                    s = script_lookup.get(ord(c), "Common")
+                    if s != "Common":
+                        if prev_script in [None, s]:
+                            cur += c
+                        else:
+                            if len(cur) > 0:
+                                scripts[prev_script] = scripts.get(prev_script, [])
+                                scripts[prev_script].append(cur)
+                                cur = ""
+                        prev_script = s
                     else:
-                        if len(cur) > 0:
-                            scripts[prev_script] = scripts.get(prev_script, [])
-                            scripts[prev_script].append(cur)
-                            cur = ""
-                    prev_script = s
-                else:
-                    cur += c
+                        cur += c
 
-            j["content"] = scripts
+                j["content"] = scripts
+            else:
+                j["content"] = txt
             ofd.write(json.dumps(j) + "\n")
