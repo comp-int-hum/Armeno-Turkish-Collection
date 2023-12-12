@@ -6,7 +6,7 @@ SCons==4.5.2
 SteamRoller==2.0.2
 torch==2.0.1
 Wikidata==0.7.0
-sklearn
+scikit-learn
 nltk
 
 
