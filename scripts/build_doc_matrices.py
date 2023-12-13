@@ -4,6 +4,16 @@ import logging
 import argparse
 import numpy as np
 
+class CustomNumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", dest="input", help="Input file")
@@ -36,7 +46,7 @@ if __name__ == "__main__":
 
             # Clean final doc matrix and convert to list
             cleaned_doc_matrix = np.nan_to_num(doc_matrix)
-            full_doc_matrix = cleaned_doc_matrix.to_list()
+            full_doc_matrix = cleaned_doc_matrix
 
             # Create max_doc_matrix
             total_probs = np.sum(cleaned_doc_matrix, axis=1) # sum across all subdocs to get total prob per lang
@@ -58,5 +68,5 @@ if __name__ == "__main__":
                 "binary_max": bool_max_matrix.astype(int)
             }
             documents.append(doc) # for future use
-            ofd.write(json.dumps(doc) + "\n")
+            ofd.write(json.dumps(doc, cls=CustomNumpyEncoder) + "\n")
             break
