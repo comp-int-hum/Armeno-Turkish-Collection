@@ -45,7 +45,7 @@ vars.AddVariables(
     ("PRETRAINED", "", "None"),
     ("SPLIT_BY_SCRIPT", "", False),
     ("APPLY_WINDOW_SIZE", "", 200),
-    ("PRECOMPUTED_LID", "", None)
+    ("PRECOMPUTED_LID", "", "work/labeled_fasttext.jsonl.gz")
 )
 
 env = Environment(
