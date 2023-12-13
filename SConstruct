@@ -171,11 +171,11 @@ else:
         GRID_MEMORY="8G"
     )
     
-    lid_matrices = env.BuildLidMatrices(
-        ["work/doc_matrices.jsonl.gz"],
-        [labeled],
-        GRID_MEMORY="8G"
-    )
+lid_matrices = env.BuildLidMatrices(
+    ["work/doc_matrices.jsonl.gz"],
+    [labeled],
+    GRID_MEMORY="8G"
+)
 
 # model, scores = env.TrainNBModel(
 #     ["work/nb_model.pk1.gz", "work/nb_scores.json"],
