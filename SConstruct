@@ -71,7 +71,7 @@ env = Environment(
         "GenerateNegativeExamples" : Builder(
             action="python scripts/generate_negative_examples.py --hathitrust_index ${HATHITRUST_INDEX} --marc_index ${MARC_INDEX} --per_language ${PER_LANGUAGE} --output ${TARGETS[0]} --random_seed ${RANDOM_SEED} --hathitrust_root ${HATHITRUST_ROOT}"
         ),
-    "CleanChunkExamples" : Builder(
+        "CleanChunkExamples" : Builder(
             action="python scripts/clean_chunk_examples.py --input ${SOURCES[0]} --max_doc_length ${MAX_DOC_LENGTH} --output ${TARGETS[0]}"
         ),
         #"TrainTestSplit" : Builder(
@@ -84,14 +84,14 @@ env = Environment(
             action="python scripts/apply_fasttext.py --input ${SOURCES[1]} --model ${SOURCES[0]} ${'--window_size ' + str(APPLY_WINDOW_SIZE) if APPLY_WINDOW_SIZE else ''} --output ${TARGETS[0]}"
         ),
         "BuildLidMatrices": Builder(
-            action="python scripts/build_lid_matrices.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
+            action="python scripts/build_doc_matrices.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
         ),
         "TrainNBModel" : Builder(
             action="python scripts/train_NB_model.py --input ${SOURCES[0]} --model ${TARGETS[0]} --scores ${TARGETS[1]}"
-            ),
+        ),
         "TrainNGModel" : Builder(
             action="python scripts/train_NG_model.py --input ${SOURCES} --model ${TARGETS[0]} --scores --ngram ${N}"
-            ),
+        ),
         "TestModel" : Builder(
             action="python scripts/test_model.py --model ${SOURCES[0]} --input ${SOURCES[1]} --scores ${TARGETS[0]} --ngram ${N} --gen_results ${TARGETS[1]} --at_results ${TARGETS[2]}"
         ),
@@ -172,7 +172,7 @@ else:
     )
     
     lid_matrices = env.BuildLidMatrices(
-        ["work/lid_matrices.jsonl.gz"],
+        ["work/doc_matrices.jsonl.gz"],
         [labeled],
         GRID_MEMORY="8G"
     )
