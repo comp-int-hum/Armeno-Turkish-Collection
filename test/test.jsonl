@@ -1,2 +1,3 @@
-{"htid": "1", "lid": [{"english": 0.6, "spanish": 0.3, "french": 0.2}, {"english": 0.5, "spanish": 0.4, "french": 0.1}]}
-{"htid": "2", "lid": [{"english": 0.3, "spanish": 0.6, "french": 0.2}, {"english": 0.6, "spanish": 0.4, "french": 0.3}]}
+{"htid": "1", "lid": [{"english": 0.6, "spanish": 0.3, "french": 0.2}, {"english": 0.5, "spanish": 0.4, "french": 0.1}, {"english": 0.8, "spanish": 0.0, "french": 0.2}]}
+{"htid": "2", "lid": [{"english": 0.3, "spanish": 0.6, "french": 0.2}, {"english": 0.6, "spanish": 0.4, "french": 0.3}, {"english": 0.25, "spanish": 0.35, "french": 0.4}]}
+{"htid": "3", "lid": [{"english": 0.0, "spanish": 0.0, "french": 1.0}, {"english": 1.0, "spanish": 0.0, "french": 0.0}, {"english": 0.5, "spanish": 0.3, "french": 0.2}]}
