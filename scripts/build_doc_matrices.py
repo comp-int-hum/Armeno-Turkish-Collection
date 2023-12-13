@@ -3,6 +3,7 @@ import gzip
 import logging
 import argparse
 import numpy as np
+logger = logging.getLogger("doc_id")
 
 class CustomNumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -26,7 +27,7 @@ if __name__ == "__main__":
     results = []
     AT_results = []
     documents = []
-    with gzip.open("labeled_fasttext.jsonl.gz", "rb") as ifd, gzip.open("doc_matrices.jsonl.gz", "wt") as ofd: # "rb" might be preferred here; though it might not matter much
+    with gzip.open("work/labeled_fasttext.jsonl.gz", "rt") as ifd, gzip.open("work/doc_matrices.jsonl.gz", "wt") as ofd: # "rb" might be preferred here; though it might not matter much
         for line in ifd:
             entry = json.loads(line)
             ini_dict_list = entry["lid"]
@@ -35,6 +36,9 @@ if __name__ == "__main__":
             lang2id = {l : i for i, l in enumerate(label_list)}
             column_len = len(lang2id) # number of languages
             row_len = len(ini_dict_list) # number of windows / "subdocs"
+            if not column_len or not row_len:
+                logger.info(f"Document with htid {htid} has label_size {column_len} and subdoc length {row_len}")
+                continue
 
             # Initialize doc_matrix to zeros
             doc_matrix = np.zeros((column_len, row_len)) # Shape: lang x subdoc_num
@@ -69,4 +73,3 @@ if __name__ == "__main__":
             }
             documents.append(doc) # for future use
             ofd.write(json.dumps(doc, cls=CustomNumpyEncoder) + "\n")
-            break
