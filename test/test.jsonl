@@ -1,14 +1,2 @@
-{
-	"htid" : "1",
-	"lid" : [
-		{"english" : 0.6, "spanish" : 0.3, "french": 0.2},
-		{"english" : 0.5, "spanish" : 0.4, "french": 0.1}
-	]
-}
-{
-	"htid": "2",
-	"lid" : [
-		{"english" : 0.3, "spanish": 0.6, "french": 0.2},
-		{"english" : 0.6, "spanish": 0.4, "french": 0.3},
-	]
-}
+{"htid": "1", "lid": [{"english": 0.6, "spanish": 0.3, "french": 0.2}, {"english": 0.5, "spanish": 0.4, "french": 0.1}]}
+{"htid": "2", "lid": [{"english": 0.3, "spanish": 0.6, "french": 0.2}, {"english": 0.6, "spanish": 0.4, "french": 0.3}]}
